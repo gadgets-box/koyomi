@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日の暦 | 日めくりカレンダー（旧暦・六曜・二十四節気・今日は何の日）</title>
+<meta name="description" content="今日の旧暦・六曜・二十四節気・今日は何の日・生まれてから何日目かがひと目でわかる日めくりカレンダー。日本語/英語対応。">
+<meta name="keywords" content="日めくりカレンダー,今日の暦,旧暦,六曜,二十四節気,今日は何の日,生まれてから何日目,大安,仏滅">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://example.com/">
+
+<!-- Open Graph / SNS -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="今日の暦">
+<meta property="og:title" content="今日の暦 | 日めくりカレンダー">
+<meta property="og:description" content="今日の旧暦・六曜・二十四節気・今日は何の日がひと目でわかる日めくりカレンダー。">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="今日の暦 | 日めくりカレンダー">
+<meta name="twitter:description" content="今日の旧暦・六曜・二十四節気・今日は何の日がひと目でわかる日めくりカレンダー。">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='42' fill='%23B7282E'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "今日の暦",
+  "alternateName": "Today's Almanac",
+  "url": "https://example.com/",
+  "inLanguage": ["ja", "en"]
+}
+</script>
+</head>
+<body>
+
+<header class="site-header">
+  <h1 class="site-title" id="siteTitleWrap">
+    <span id="siteTitle">今日の暦</span>
+    <small id="siteTagline">日めくりカレンダー</small>
+  </h1>
+  <button class="lang-toggle" id="langToggle" type="button">English</button>
+</header>
+
+<main class="calendar-stack">
+  <div class="stack-page s2" aria-hidden="true"></div>
+  <div class="stack-page s1" aria-hidden="true"></div>
+
+  <section class="calendar-page page-enter" aria-label="今日の暦">
+    <div class="tear-fringe" aria-hidden="true"></div>
+    <div class="hanger" aria-hidden="true">
+      <div class="hanger-loop"></div>
+      <div class="hanger-hole"></div>
+    </div>
+
+    <div class="page-topline">
+      <button class="nav-btn" id="prevDayBtn" type="button" aria-label="前の日へ">&#8249;</button>
+      <button class="today-jump" id="todayJump" type="button">今日に戻る</button>
+      <button class="nav-btn" id="nextDayBtn" type="button" aria-label="次の日へ">&#8250;</button>
+    </div>
+
+    <div class="date-hero">
+      <div class="date-number" id="dateNumber">1</div>
+    </div>
+    <div class="date-meta">
+      <div class="month-year" id="monthYear">2026年1月</div>
+      <span class="weekday-badge" id="weekdayBadge">木曜日</span>
+      <div class="holiday-name" id="holidayName"></div>
+    </div>
+
+    <div class="motif-row">
+      <div class="motif-icon" id="illustrationFrame" aria-hidden="true"></div>
+      <div class="motif-caption" id="illustrationCaption"></div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label" id="lunarLabel">旧暦</div>
+        <div class="value" id="lunarValue">—</div>
+      </div>
+      <div class="info-card">
+        <div class="label" id="rokuyoLabel">六曜</div>
+        <div class="value" id="rokuyoValue">—</div>
+      </div>
+      <div class="info-card moon-card">
+        <div class="label" id="moonAgeLabel">月齢</div>
+        <div class="moon-card-row">
+          <span class="moon-icon" id="moonPhaseIcon" aria-hidden="true"></span>
+          <div class="value" id="moonAgeValue">—</div>
+        </div>
+        <div class="moon-name" id="moonPhaseName"></div>
+      </div>
+      <div class="info-card">
+        <div class="label" id="sekkiLabel">二十四節気</div>
+        <div class="value" id="sekkiValue">—</div>
+        <div class="sub" id="sekkiSub"></div>
+      </div>
+    </div>
+
+    <div class="feature-row">
+      <div class="history-block">
+        <h2 id="historyTitle">今日は何の日</h2>
+        <div class="history-tabs" role="tablist">
+          <button class="history-tab" id="tabEvents" role="tab" aria-selected="true" type="button">できごと</button>
+          <button class="history-tab" id="tabBirths" role="tab" aria-selected="false" type="button">誕生</button>
+        </div>
+        <ul class="history-list" id="historyList" aria-live="polite">
+          <li>読み込み中…</li>
+        </ul>
+        <div class="history-note" id="historyFallbackNote"></div>
+        <div class="history-note" id="historySource">出典: ウィキペディア</div>
+      </div>
+    </div>
+
+    <div class="birthday-block">
+      <h2 id="birthdaySectionTitle">生まれてから何日目？</h2>
+      <div class="birthday-row">
+        <div class="birthday-input-row">
+          <input type="date" id="birthdayInput" aria-label="生年月日を選択">
+          <button class="small-btn primary" id="birthdaySetBtn" type="button">誕生日を設定</button>
+          <button class="small-btn" id="birthdayClearBtn" type="button" style="display:none;">設定を削除</button>
+        </div>
+        <div class="birthday-count" id="birthdayResult"></div>
+      </div>
+      <div class="birthday-hint" id="birthdayHint">設定はこの端末のブラウザに保存され、他の人には共有されません。</div>
+    </div>
+
+    <div class="share-row">
+      <span id="shareLabel">この日をシェア</span>
+      <button id="shareBtn" type="button">🔗</button>
+    </div>
+  </section>
+
+  <div class="perforation" aria-hidden="true"></div>
+</main>
+
+<p class="keyboard-hint" id="keyboardHint">← → キーで日付を移動できます</p>
+
+<footer class="site-footer">
+  <a href="#top" id="backToTop">トップへ戻る</a><br>
+  今日の暦 — 旧暦・二十四節気は天文計算による近似値、今日は何の日はWikipediaのデータを利用しています。
+</footer>
+
+<script src="js/astro.js"></script>
+<script src="js/lunar.js"></script>
+<script src="js/moonNames.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/historyEvents.js"></script>
+<script src="js/holidays.js"></script>
+<script src="js/app.js"></script>
+<noscript>
+  <p style="text-align:center; padding: 20px;">
+    このサイトの表示にはJavaScriptが必要です。ブラウザの設定でJavaScriptを有効にしてください。<br>
+    This site requires JavaScript to display calendar content. Please enable JavaScript in your browser.
+  </p>
+</noscript>
+</body>
+</html>
