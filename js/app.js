@@ -217,6 +217,7 @@
     const cur = sekki.current;
     const curName = isJa ? cur.ja : cur.en;
     $("#sekkiValue").textContent = curName;
+    $("#sekkiDesc").textContent = isJa ? cur.desc : cur.descEn;
     if (sekki.isToday) {
       $("#sekkiSub").textContent = t("sekkiTodayNote");
     } else if (sekki.next) {
