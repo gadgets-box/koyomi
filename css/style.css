@@ -381,6 +381,13 @@ body.season-autumn { --accent: var(--season-autumn); }
   margin-top: 1px;
 }
 
+.sekki-desc {
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
 .rokuyo-dot {
   display: inline-block;
   width: 8px; height: 8px;
