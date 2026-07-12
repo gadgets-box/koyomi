@@ -12,7 +12,6 @@
     lang: "ja",
     date: null, // {y,m,d} JST calendar date currently displayed
     historyTab: "events",
-    historyCache: {},
   };
 
   function todayJST() {
@@ -51,6 +50,20 @@
 
   function reiwaYear(y) {
     return y - REIWA_START_YEAR + 1;
+  }
+
+  // 何かのレンダリング処理でエラーが起きても、他の部分の表示を止めないための
+  // 安全装置。GitHub Pages 等で一部データ取得に失敗しても、イラストや
+  // カレンダー本体の見た目は必ず表示されるようにする。
+  function safeRun(label, fn) {
+    try {
+      const result = fn();
+      if (result && typeof result.catch === "function") {
+        result.catch((err) => console.error(`[koyomi] ${label} failed:`, err));
+      }
+    } catch (err) {
+      console.error(`[koyomi] ${label} failed:`, err);
+    }
   }
 
   // ---------- URL hash routing ----------
@@ -106,6 +119,7 @@
     $("#lunarLabel").textContent = t("lunarLabel");
     $("#rokuyoLabel").textContent = t("rokuyoLabel");
     $("#sekkiLabel").textContent = t("sekkiLabel");
+    $("#moonAgeLabel").textContent = t("moonAgeLabel");
   }
 
   function renderDate() {
@@ -143,6 +157,44 @@
         )} — a daily tear-off calendar.`;
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) metaDesc.setAttribute("content", desc);
+
+    // 日曜日は暫定的に赤で表示（祝日情報が届く前のデフォルト）。
+    // 土曜日は青系、平日はテーマの色に戻す。祝日情報は renderHoliday() が
+    // 非同期で取得して上書きする。
+    applyDayColorClass(wIdx === 0 ? "sunday" : wIdx === 6 ? "saturday" : null);
+    $("#holidayName").textContent = "";
+  }
+
+  function applyDayColorClass(kind) {
+    const badge = $("#weekdayBadge");
+    const num = $("#dateNumber");
+    [badge, num].forEach((el) => {
+      el.classList.remove("is-sunday-or-holiday", "is-saturday");
+    });
+    if (kind === "sunday" || kind === "holiday") {
+      badge.classList.add("is-sunday-or-holiday");
+      num.classList.add("is-sunday-or-holiday");
+    } else if (kind === "saturday") {
+      badge.classList.add("is-saturday");
+      num.classList.add("is-saturday");
+    }
+  }
+
+  async function renderHoliday() {
+    const d = state.date;
+    if (!window.KoyomiHolidays) return;
+    const holiday = await window.KoyomiHolidays.getHoliday(fmtISO(d));
+    // 取得中にページ遷移していたら古い結果は反映しない
+    if (!isSameDate(d, state.date)) return;
+
+    if (holiday) {
+      applyDayColorClass("holiday");
+      const isJa = state.lang === "ja";
+      $("#holidayName").textContent = isJa ? holiday.name : holiday.nameEn;
+    } else {
+      const wIdx = weekdayIndex(d);
+      applyDayColorClass(wIdx === 0 ? "sunday" : wIdx === 6 ? "saturday" : null);
+    }
   }
 
   function renderLunarSekkiRokuyo() {
@@ -177,6 +229,21 @@
     }
   }
 
+  function renderMoonAge() {
+    const d = state.date;
+    const L = window.KoyomiLunar;
+    const I = window.KoyomiIllustration;
+    const isJa = state.lang === "ja";
+    const moon = L.getMoonAge(d.y, d.m, d.d);
+    $("#moonAgeValue").textContent = moon.age.toFixed(1);
+    const accent = I.SEASON_COLORS[I.getSeason(d.m)];
+    $("#moonPhaseIcon").innerHTML = I.getMoonPhaseSVG(moon.phase, accent);
+    if (window.KoyomiMoonNames) {
+      const name = window.KoyomiMoonNames.getMoonPhaseName(moon.age);
+      $("#moonPhaseName").textContent = isJa ? name.ja : name.en;
+    }
+  }
+
   function renderIllustration() {
     const d = state.date;
     const svg = window.KoyomiIllustration.getIllustrationSVG(d.m, d.d);
@@ -186,12 +253,19 @@
       .replace(/season-\w+/g, "")
       .trim();
     document.body.classList.add(`season-${season}`);
+
+    const caption = window.KoyomiIllustration.getCaption(d.m, d.d, state.lang);
+    $("#illustrationCaption").innerHTML = `<strong>${t(
+      "motifLabel"
+    )}</strong>${escapeHTML(caption)}`;
   }
 
   async function renderHistory() {
     const d = state.date;
     const listEl = $("#historyList");
+    const noteEl = $("#historyFallbackNote");
     listEl.innerHTML = `<li class="history-loading">${t("historyLoading")}</li>`;
+    noteEl.textContent = "";
 
     const requestedDate = d;
     const requestedLang = state.lang;
@@ -205,6 +279,10 @@
       return;
     }
 
+    if (data.sourceNote === "en-fallback" && state.lang === "ja") {
+      noteEl.textContent = t("historyEnFallback");
+    }
+
     const items = state.historyTab === "events" ? data.events : data.births;
     if (!items || items.length === 0) {
       listEl.innerHTML = `<li>${t("historyError")}</li>`;
@@ -214,9 +292,11 @@
     listEl.innerHTML = items
       .map(
         (item) =>
-          `<li><span class="year">${item.year ?? ""}</span>${escapeHTML(
-            item.text
-          )}</li>`
+          `<li>${
+            item.year !== null && item.year !== undefined
+              ? `<span class="year">${item.year}</span>`
+              : ""
+          }${escapeHTML(item.text)}</li>`
       )
       .join("");
   }
@@ -282,29 +362,65 @@
   }
 
   function renderAll() {
-    applyLangAttrs();
-    renderHeader();
-    renderDate();
-    renderLunarSekkiRokuyo();
-    renderIllustration();
-    renderBirthday();
-    renderHistory();
-    renderStructuredData();
-    updateHash();
+    safeRun("applyLangAttrs", applyLangAttrs);
+    safeRun("renderHeader", renderHeader);
+    safeRun("renderDate", renderDate);
+    safeRun("renderHoliday", renderHoliday);
+    safeRun("renderLunarSekkiRokuyo", renderLunarSekkiRokuyo);
+    safeRun("renderMoonAge", renderMoonAge);
+    safeRun("renderIllustration", renderIllustration);
+    safeRun("renderBirthday", renderBirthday);
+    safeRun("renderHistory", renderHistory);
+    safeRun("renderStructuredData", renderStructuredData);
+    safeRun("updateHash", updateHash);
   }
 
   // ---------- Event wiring ----------
 
+  let isAnimating = false;
+
+  function directionFor(newDate) {
+    const diff = daysBetween(state.date, newDate);
+    if (diff === 0) return null;
+    return diff > 0 ? "next" : "prev";
+  }
+
   function goToDate(newDate) {
-    state.date = newDate;
-    renderAll();
+    const direction = directionFor(newDate);
+    const pageEl = document.querySelector(".calendar-page");
+    const reduceMotion =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!direction || !pageEl || reduceMotion || isAnimating) {
+      state.date = newDate;
+      renderAll();
+      return;
+    }
+
+    isAnimating = true;
+    pageEl.classList.remove("page-enter");
+    pageEl.classList.add(direction === "prev" ? "tearing-prev" : "tearing-next");
+
+    setTimeout(() => {
+      state.date = newDate;
+      renderAll();
+      pageEl.classList.remove("tearing-next", "tearing-prev");
+      pageEl.classList.add("page-enter");
+      const onEnd = () => {
+        pageEl.classList.remove("page-enter");
+        pageEl.removeEventListener("animationend", onEnd);
+        isAnimating = false;
+      };
+      pageEl.addEventListener("animationend", onEnd);
+    }, 260);
   }
 
   function setHistoryTab(tab) {
     state.historyTab = tab;
     $("#tabEvents").setAttribute("aria-selected", String(tab === "events"));
     $("#tabBirths").setAttribute("aria-selected", String(tab === "births"));
-    renderHistory();
+    safeRun("renderHistory", renderHistory);
   }
 
   function navigatorPreferredLang() {
@@ -316,6 +432,10 @@
     const { date: hashDate, lang: hashLang } = parseHash();
     state.date = hashDate || todayJST();
     state.lang = hashLang || navigatorPreferredLang();
+
+    if (window.KoyomiHolidays) {
+      window.KoyomiHolidays.ensureLoaded().then(() => safeRun("renderHoliday", renderHoliday));
+    }
 
     $("#prevDayBtn").addEventListener("click", () =>
       goToDate(addDays(state.date, -1))
@@ -337,12 +457,12 @@
       const val = $("#birthdayInput").value;
       if (val) {
         localStorage.setItem("koyomi_birthday", val);
-        renderBirthday();
+        safeRun("renderBirthday", renderBirthday);
       }
     });
     $("#birthdayClearBtn").addEventListener("click", () => {
       localStorage.removeItem("koyomi_birthday");
-      renderBirthday();
+      safeRun("renderBirthday", renderBirthday);
     });
 
     $("#shareBtn").addEventListener("click", async () => {

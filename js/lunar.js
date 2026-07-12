@@ -224,10 +224,25 @@
     return { current, isToday, next: nextInfo };
   }
 
+  /**
+   * 月齢（新月からの経過日数）と満ち欠けの位相(0=新月,0.5=満月)を算出
+   */
+  function getMoonAge(y, m, d) {
+    const targetJD = jstNoonJD(y, m, d);
+    const seedDate = A.fromJulianDay(targetJD);
+    const { jd: nmJD } = A.findPrecedingNewMoon(seedDate);
+    const synodic = 29.530588853;
+    let age = targetJD - nmJD;
+    if (age < 0) age += synodic;
+    const phase = (age % synodic) / synodic;
+    return { age, phase };
+  }
+
   global.KoyomiLunar = {
     getLunarDate,
     getRokuyo,
     getSekkiInfo,
+    getMoonAge,
     SEKKI_NAMES,
     ROKUYO_NAMES,
   };
