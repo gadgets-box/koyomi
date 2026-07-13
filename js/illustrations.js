@@ -1,10 +1,12 @@
 /**
  * illustrations.js
- * 「切り絵（kirie）」風・単色シルエットの季節イラストを生成する。
- * 各月ごとに3種類（上旬・中旬・下旬）のバリエーションを用意し、月の中でも
- * 見た目が移り変わるようにしている。色は外部CSSに依存せず、生成時に
- * インライン属性として直接埋め込むため、CSSの読み込みに問題があっても
- * イラスト自体は必ず表示される。
+ * 小さく表示しても一目で分かる「アイコン」スタイルの季節イラスト。
+ * 1つの図につき主役となるモチーフを1つ（＋ごく小さな添え物）に絞り、
+ * 太い線・大きな塗りで構成することで視認性を優先している。
+ * 月ごとに4種類（およそ1週間ごと）のバリエーションを用意し、特定の記念日
+ * にはさらに専用のイラストを割り当てている。
+ * 色は外部CSSに依存せず、生成時にインライン属性として直接埋め込むため、
+ * CSSの読み込みに問題があってもイラスト自体は必ず表示される。
  */
 (function (global) {
   const SEASON_COLORS = {
@@ -26,42 +28,15 @@
     return SEASON_COLORS[getSeason(month)];
   }
 
-  // 上旬(0) / 中旬(1) / 下旬(2) のどのバリエーションを使うか
+  // 週インデックス 0-3（およそ1週間ごとに切り替わる）
   function variantIndex(day) {
-    if (day <= 10) return 0;
-    if (day <= 20) return 1;
-    return 2;
+    if (day <= 7) return 0;
+    if (day <= 14) return 1;
+    if (day <= 21) return 2;
+    return 3;
   }
 
-  // ---- 図形ヘルパー（すべて fill / stroke をインラインで指定） ----
-
-  function petal(cx, cy, r, color) {
-    return `<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r * 0.62}" fill="${color}" />`;
-  }
-
-  function blossomCluster(cx, cy, scale, color, petals) {
-    const n = petals || 5;
-    let out = "";
-    for (let i = 0; i < n; i++) {
-      const angle = (Math.PI * 2 * i) / n;
-      const px = cx + Math.cos(angle) * scale;
-      const py = cy + Math.sin(angle) * scale;
-      out += `<g transform="rotate(${(angle * 180) / Math.PI} ${px} ${py})">${petal(
-        px,
-        py,
-        scale * 0.9,
-        color
-      )}</g>`;
-    }
-    out += `<circle cx="${cx}" cy="${cy}" r="${scale * 0.5}" fill="${color}" />`;
-    return out;
-  }
-
-  function branch(x1, y1, x2, y2, color, width) {
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${
-      width || 3
-    }" stroke-linecap="round" />`;
-  }
+  // ================= 基本図形ヘルパー =================
 
   function dot(cx, cy, r, color, opacity) {
     return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"${
@@ -69,331 +44,601 @@
     } />`;
   }
 
-  function mountain(cx, baseY, w, h, color) {
-    return `<path d="M ${cx - w / 2} ${baseY} L ${cx} ${baseY - h} L ${
-      cx + w / 2
-    } ${baseY} Z" fill="${color}" />`;
+  function line(x1, y1, x2, y2, color, w) {
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${
+      w || 4
+    }" stroke-linecap="round" />`;
   }
 
-  function bird(cx, cy, size, color) {
-    return `<path d="M ${cx - size} ${cy} Q ${cx - size / 2} ${cy - size} ${cx} ${cy}
-      Q ${cx + size / 2} ${cy - size} ${cx + size} ${cy}"
-      fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+  // ================= モチーフ・アイコン =================
+  // すべて中心座標(cx,cy)と大きさ(s)を受け取り、単体で意味が伝わる
+  // シンプルで太いシルエットになるように設計している。
+
+  function sunrise(cx, cy, r, color) {
+    const rays = [20, 55, 90, 125, 160]
+      .map((a) => {
+        const rad = (a * Math.PI) / 180;
+        const x1 = cx + Math.cos(rad) * (r + 6);
+        const y1 = cy - Math.sin(rad) * (r + 6);
+        const x2 = cx + Math.cos(rad) * (r + 20);
+        const y2 = cy - Math.sin(rad) * (r + 20);
+        return line(x1, y1, x2, y2, color, 4);
+      })
+      .join("");
+    return `
+      <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy} Z" fill="${color}" />
+      ${line(cx - r - 14, cy, cx + r + 14, cy, color, 3)}
+      ${rays}
+    `;
   }
 
-  function butterfly(cx, cy, size, color) {
-    return `<g>
-      <ellipse cx="${cx - size * 0.5}" cy="${cy}" rx="${size * 0.6}" ry="${size * 0.4}" fill="${color}" transform="rotate(-20 ${cx - size * 0.5} ${cy})" />
-      <ellipse cx="${cx + size * 0.5}" cy="${cy}" rx="${size * 0.6}" ry="${size * 0.4}" fill="${color}" transform="rotate(20 ${cx + size * 0.5} ${cy})" />
-      <line x1="${cx}" y1="${cy - size * 0.4}" x2="${cx}" y2="${cy + size * 0.4}" stroke="${color}" stroke-width="1.5" />
-    </g>`;
+  function pineSprig(cx, cy, s, color) {
+    const needleFan = (bx, by, angle) => {
+      const spread = [-26, -13, 0, 13, 26];
+      return spread
+        .map((da) => {
+          const a = ((angle + da) * Math.PI) / 180;
+          const x2 = bx + Math.cos(a) * s * 0.55;
+          const y2 = by - Math.sin(a) * s * 0.55;
+          return line(bx, by, x2, y2, color, 3.5);
+        })
+        .join("");
+    };
+    return `
+      ${line(cx, cy + s, cx, cy - s * 0.1, INK, 5)}
+      ${line(cx, cy - s * 0.1, cx - s * 0.7, cy - s * 0.55, INK, 4)}
+      ${line(cx, cy - s * 0.1, cx + s * 0.7, cy - s * 0.75, INK, 4)}
+      ${line(cx, cy - s * 0.1, cx, cy - s * 1.05, INK, 4)}
+      ${needleFan(cx - s * 0.7, cy - s * 0.55, 55)}
+      ${needleFan(cx + s * 0.7, cy - s * 0.75, 60)}
+      ${needleFan(cx, cy - s * 1.05, 90)}
+    `;
   }
 
-  function dragonfly(cx, cy, size, color) {
-    return `<g opacity="0.85">
-      <line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy + size * 1.6}" stroke="${color}" stroke-width="2" stroke-linecap="round" />
-      <ellipse cx="${cx - size}" cy="${cy}" rx="${size}" ry="${size * 0.35}" fill="${color}" opacity="0.7" />
-      <ellipse cx="${cx + size}" cy="${cy}" rx="${size}" ry="${size * 0.35}" fill="${color}" opacity="0.7" />
-      <circle cx="${cx}" cy="${cy - size * 0.3}" r="${size * 0.35}" fill="${color}" />
-    </g>`;
+  function kiteIcon(cx, cy, s, color) {
+    return `
+      <path d="M ${cx} ${cy - s} L ${cx + s * 0.7} ${cy} L ${cx} ${cy + s} L ${cx - s * 0.7} ${cy} Z" fill="${color}" />
+      ${line(cx, cy - s, cx, cy + s, INK, 1.5)}
+      ${line(cx - s * 0.7, cy, cx + s * 0.7, cy, INK, 1.5)}
+      <path d="M ${cx} ${cy + s} q 8 10 -4 18 q 12 6 -2 18" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" />
+    `;
   }
 
-  function heart(cx, cy, size, color) {
-    return `<path d="M ${cx} ${cy + size * 0.8}
-      C ${cx - size * 1.3} ${cy - size * 0.4}, ${cx - size * 0.5} ${cy - size * 1.3}, ${cx} ${cy - size * 0.5}
-      C ${cx + size * 0.5} ${cy - size * 1.3}, ${cx + size * 1.3} ${cy - size * 0.4}, ${cx} ${cy + size * 0.8} Z"
+  function budBranch(cx, cy, s, color) {
+    const bx = cx + s * 0.25;
+    const by = cy - s * 0.5;
+    return `
+      ${line(cx - s * 1.1, cy + s * 0.7, bx - s * 0.15, by + s * 0.15, INK, 4)}
+      <path d="M ${bx} ${by - s * 0.55} Q ${bx + s * 0.32} ${by - s * 0.1} ${bx} ${by + s * 0.4} Q ${bx - s * 0.32} ${by - s * 0.1} ${bx} ${by - s * 0.55} Z" fill="${color}" />
+      <line x1="${bx}" y1="${by - s * 0.4}" x2="${bx}" y2="${by + s * 0.25}" stroke="${INK}" stroke-width="1.5" opacity="0.4" />
+      ${dot(cx - s * 0.45, cy + s * 0.25, s * 0.16, color, 0.7)}
+    `;
+  }
+
+  function snowflakeIcon(cx, cy, r, color) {
+    let out = "";
+    for (let i = 0; i < 6; i++) {
+      const a = (i * 60 * Math.PI) / 180;
+      const x2 = cx + Math.cos(a) * r;
+      const y2 = cy + Math.sin(a) * r;
+      out += line(cx, cy, x2, y2, color, 4);
+      const mx = cx + Math.cos(a) * r * 0.6;
+      const my = cy + Math.sin(a) * r * 0.6;
+      const a1 = a + Math.PI / 4;
+      const a2 = a - Math.PI / 4;
+      out += line(mx, my, mx + Math.cos(a1) * r * 0.3, my + Math.sin(a1) * r * 0.3, color, 3);
+      out += line(mx, my, mx + Math.cos(a2) * r * 0.3, my + Math.sin(a2) * r * 0.3, color, 3);
+    }
+    return out;
+  }
+
+  function bigBlossom(cx, cy, r, color, petals) {
+    const n = petals || 5;
+    let out = "";
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n;
+      const px = cx + Math.cos(a) * r;
+      const py = cy + Math.sin(a) * r;
+      out += `<g transform="rotate(${(a * 180) / Math.PI} ${px} ${py})">
+        <ellipse cx="${px}" cy="${py}" rx="${r * 0.85}" ry="${r * 0.55}" fill="${color}" />
+      </g>`;
+    }
+    out += dot(cx, cy, r * 0.42, INK, 0.7);
+    return out;
+  }
+
+  function oniMask(cx, cy, s, color) {
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${s}" fill="${color}" />
+      <path d="M ${cx - s * 0.5} ${cy - s * 0.85} L ${cx - s * 0.22} ${cy - s * 1.5} L ${cx - s * 0.02} ${cy - s * 0.85} Z" fill="${color}" />
+      <path d="M ${cx + s * 0.5} ${cy - s * 0.85} L ${cx + s * 0.22} ${cy - s * 1.5} L ${cx + s * 0.02} ${cy - s * 0.85} Z" fill="${color}" />
+      ${dot(cx - s * 0.35, cy - s * 0.05, s * 0.15, INK)}
+      ${dot(cx + s * 0.35, cy - s * 0.05, s * 0.15, INK)}
+      <path d="M ${cx - s * 0.3} ${cy + s * 0.5} Q ${cx} ${cy + s * 0.72} ${cx + s * 0.3} ${cy + s * 0.5}" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round" />
+    `;
+  }
+
+  function birdOnBranch(cx, cy, s, color) {
+    return `
+      ${line(cx - s * 1.3, cy + s * 0.3, cx + s * 1.3, cy + s * 0.5, INK, 4)}
+      <path d="M ${cx - s * 0.5} ${cy} Q ${cx} ${cy - s * 0.7} ${cx + s * 0.5} ${cy}
+        Q ${cx + s * 0.15} ${cy + s * 0.15} ${cx} ${cy - s * 0.05}
+        Q ${cx - s * 0.15} ${cy + s * 0.15} ${cx - s * 0.5} ${cy} Z" fill="${color}" />
+      ${dot(cx + s * 0.18, cy - s * 0.35, s * 0.08, INK)}
+    `;
+  }
+
+  function sproutIcon(cx, cy, s, color) {
+    return `
+      ${line(cx, cy + s, cx, cy - s * 0.15, color, 4)}
+      <path d="M ${cx} ${cy - s * 0.1} Q ${cx - s * 0.8} ${cy - s * 0.6} ${cx - s * 0.9} ${cy - s * 1.15} Q ${cx - s * 0.2} ${cy - s * 0.9} ${cx} ${cy - s * 0.1} Z" fill="${color}" />
+      <path d="M ${cx} ${cy - s * 0.1} Q ${cx + s * 0.8} ${cy - s * 0.5} ${cx + s * 0.9} ${cy - s * 1.05} Q ${cx + s * 0.2} ${cy - s * 0.8} ${cx} ${cy - s * 0.1} Z" fill="${color}" />
+    `;
+  }
+
+  function treeBloom(cx, cy, r, color) {
+    return `
+      ${line(cx, cy + r * 0.95, cx, cy + r * 0.1, INK, 6)}
+      ${dot(cx, cy - r * 0.25, r, color)}
+    `;
+  }
+
+  function fallingPetalsIcon(cx, cy, s, color) {
+    const p = (x, y, r, rot) =>
+      `<g transform="rotate(${rot} ${x} ${y})"><ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.6}" fill="${color}" /></g>`;
+    return `
+      ${p(cx, cy - s * 0.6, s * 0.5, 20)}
+      ${p(cx - s * 0.8, cy + s * 0.1, s * 0.32, -15)}
+      ${p(cx + s * 0.7, cy + s * 0.3, s * 0.3, 35)}
+      ${p(cx - s * 0.2, cy + s * 0.9, s * 0.24, 10)}
+      ${p(cx + s * 0.5, cy - s * 0.9, s * 0.2, -25)}
+    `;
+  }
+
+  function dangoIcon(cx, cy, s, color) {
+    return `
+      ${line(cx, cy - s * 1.3, cx, cy + s * 1.1, INK, 3)}
+      ${dot(cx, cy - s * 0.8, s * 0.42, color)}
+      ${dot(cx, cy, s * 0.42, color, 0.78)}
+      ${dot(cx, cy + s * 0.8, s * 0.42, color, 0.55)}
+    `;
+  }
+
+  function leafIcon(cx, cy, s, color) {
+    return `
+      <path d="M ${cx} ${cy + s} Q ${cx - s} ${cy} ${cx} ${cy - s} Q ${cx + s} ${cy} ${cx} ${cy + s} Z" fill="${color}" />
+      ${line(cx, cy + s * 0.8, cx, cy - s * 0.8, INK, 2)}
+    `;
+  }
+
+  function koinobori(cx, cy, s, color) {
+    return `
+      <path d="M ${cx - s * 1.3} ${cy - s * 0.35} Q ${cx - s * 0.3} ${cy - s * 0.65} ${cx + s * 0.9} ${cy - s * 0.35}
+        Q ${cx + s * 1.5} ${cy - s * 0.15} ${cx + s * 1.5} ${cy}
+        Q ${cx + s * 1.5} ${cy + s * 0.15} ${cx + s * 0.9} ${cy + s * 0.35}
+        Q ${cx - s * 0.3} ${cy + s * 0.65} ${cx - s * 1.3} ${cy + s * 0.35}
+        Q ${cx - s * 1.05} ${cy} ${cx - s * 1.3} ${cy - s * 0.35} Z" fill="${color}" />
+      ${line(cx - s * 0.55, cy - s * 0.53, cx - s * 0.55, cy + s * 0.53, INK, 2.5)}
+      ${line(cx + s * 0.15, cy - s * 0.42, cx + s * 0.15, cy + s * 0.42, INK, 2.5)}
+      <circle cx="${cx - s * 0.95}" cy="${cy - s * 0.05}" r="${s * 0.14}" fill="${INK}" />
+      <path d="M ${cx + s * 0.9} ${cy - s * 0.35} L ${cx + s * 1.5} ${cy - s * 0.55} L ${cx + s * 1.15} ${cy} L ${cx + s * 1.5} ${cy + s * 0.55} L ${cx + s * 0.9} ${cy + s * 0.35}" fill="${color}" opacity="0.75" />
+    `;
+  }
+
+  function ladybugIcon(cx, cy, s, color) {
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${s}" fill="${color}" />
+      ${line(cx, cy - s, cx, cy + s, INK, 2)}
+      ${dot(cx - s * 0.4, cy - s * 0.2, s * 0.16, INK)}
+      ${dot(cx + s * 0.4, cy - s * 0.2, s * 0.16, INK)}
+      ${dot(cx - s * 0.3, cy + s * 0.4, s * 0.14, INK)}
+      ${dot(cx, cy - s * 1.05, s * 0.35, INK)}
+    `;
+  }
+
+  function dragonflyBig(cx, cy, s, color) {
+    return `
+      ${line(cx, cy - s * 0.9, cx, cy + s * 0.9, INK, 3)}
+      <ellipse cx="${cx - s * 0.9}" cy="${cy - s * 0.2}" rx="${s * 0.85}" ry="${s * 0.3}" fill="${color}" opacity="0.8" />
+      <ellipse cx="${cx + s * 0.9}" cy="${cy - s * 0.2}" rx="${s * 0.85}" ry="${s * 0.3}" fill="${color}" opacity="0.8" />
+      ${dot(cx, cy - s * 0.75, s * 0.3, color)}
+    `;
+  }
+
+  function hydrangeaBall(cx, cy, s, color) {
+    return `
+      ${bigBlossom(cx - s * 0.5, cy - s * 0.3, s * 0.5, color, 4)}
+      ${bigBlossom(cx + s * 0.5, cy - s * 0.3, s * 0.5, color, 4)}
+      ${bigBlossom(cx, cy + s * 0.3, s * 0.55, color, 4)}
+      ${bigBlossom(cx, cy - s * 0.65, s * 0.42, color, 4)}
+    `;
+  }
+
+  function umbrellaIcon(cx, cy, s, color) {
+    return `
+      <path d="M ${cx - s} ${cy} A ${s} ${s} 0 0 1 ${cx + s} ${cy} Z" fill="${color}" />
+      ${line(cx, cy, cx, cy + s * 1.3, INK, 3)}
+      <path d="M ${cx} ${cy + s * 1.3} q -10 6 -14 -3" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round" />
+      ${[-1, -0.5, 0.5, 1]
+        .map((f) => line(cx + f * s, cy, cx + f * s, cy + s * 0.15, color, 3))
+        .join("")}
+    `;
+  }
+
+  function snailIcon(cx, cy, s, color) {
+    return `
+      <path d="M ${cx - s} ${cy + s * 0.3} Q ${cx - s} ${cy - s * 0.6} ${cx} ${cy - s * 0.6}
+        Q ${cx + s * 0.8} ${cy - s * 0.6} ${cx + s * 0.8} ${cy}
+        Q ${cx + s * 0.8} ${cy + s * 0.5} ${cx + s * 0.2} ${cy + s * 0.5}
+        L ${cx - s} ${cy + s * 0.5} Z" fill="${color}" />
+      <circle cx="${cx + s * 0.15}" cy="${cy - s * 0.05}" r="${s * 0.35}" fill="none" stroke="${INK}" stroke-width="2.5" />
+      ${line(cx - s, cy + s * 0.5, cx - s * 1.4, cy + s * 0.75, color, 4)}
+      ${line(cx - s * 1.15, cy + s * 0.15, cx - s * 1.3, cy - s * 0.15, color, 3)}
+      ${line(cx - s * 0.95, cy + s * 0.15, cx - s * 0.85, cy - s * 0.15, color, 3)}
+    `;
+  }
+
+  function rainbowArc(cx, cy, r, color) {
+    return `
+      <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" fill="none" stroke="${color}" stroke-width="6" opacity="0.9" />
+      <path d="M ${cx - r * 0.75} ${cy} A ${r * 0.75} ${r * 0.75} 0 0 1 ${cx + r * 0.75} ${cy}" fill="none" stroke="${INK}" stroke-width="4" opacity="0.35" />
+      <path d="M ${cx - r * 0.5} ${cy} A ${r * 0.5} ${r * 0.5} 0 0 1 ${cx + r * 0.5} ${cy}" fill="none" stroke="${color}" stroke-width="4" opacity="0.55" />
+    `;
+  }
+
+  function tanabataBamboo(cx, cy, s, color) {
+    const strip = (x, y, h) => `<rect x="${x - 3}" y="${y}" width="6" height="${h}" fill="${color}" rx="1.5" />`;
+    return `
+      ${line(cx, cy + s * 1.3, cx, cy - s * 1.3, INK, 5)}
+      ${line(cx, cy - s * 0.8, cx - s * 0.5, cy - s * 0.95, INK, 3)}
+      ${line(cx, cy - s * 0.2, cx + s * 0.55, cy - s * 0.4, INK, 3)}
+      ${strip(cx - s * 0.5, cy - s * 0.95, s * 0.75)}
+      ${strip(cx + s * 0.55, cy - s * 0.4, s * 0.65)}
+    `;
+  }
+
+  function starIcon(cx, cy, r, color) {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const rad = i % 2 === 0 ? r : r * 0.42;
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      pts.push(`${(cx + Math.cos(a) * rad).toFixed(1)},${(cy + Math.sin(a) * rad).toFixed(1)}`);
+    }
+    return `<polygon points="${pts.join(" ")}" fill="${color}" />`;
+  }
+
+  function fireworkBurst(cx, cy, r, color) {
+    const rays = [0, 45, 90, 135, 180, 225, 270, 315]
+      .map((a) => {
+        const rad = (a * Math.PI) / 180;
+        const x2 = cx + Math.cos(rad) * r;
+        const y2 = cy + Math.sin(rad) * r;
+        return line(cx, cy, x2, y2, color, 3) + dot(x2, y2, 3, color);
+      })
+      .join("");
+    return `${dot(cx, cy, 3, color)}${rays}`;
+  }
+
+  function shavedIce(cx, cy, s, color) {
+    return `
+      <path d="M ${cx - s * 0.7} ${cy} L ${cx + s * 0.7} ${cy} L ${cx + s * 0.25} ${cy + s * 1.1} L ${cx - s * 0.25} ${cy + s * 1.1} Z" fill="${INK}" opacity="0.18" />
+      <path d="M ${cx - s * 0.75} ${cy} Q ${cx} ${cy - s * 0.95} ${cx + s * 0.75} ${cy} Q ${cx} ${cy - s * 0.55} ${cx - s * 0.75} ${cy} Z" fill="${color}" />
+      ${dot(cx, cy - s * 0.85, s * 0.14, color)}
+    `;
+  }
+
+  function thunderCloud(cx, cy, s, color) {
+    return `
+      <circle cx="${cx - s * 0.5}" cy="${cy}" r="${s * 0.55}" fill="${color}" />
+      <circle cx="${cx}" cy="${cy - s * 0.3}" r="${s * 0.7}" fill="${color}" />
+      <circle cx="${cx + s * 0.55}" cy="${cy}" r="${s * 0.5}" fill="${color}" />
+      <rect x="${cx - s * 0.9}" y="${cy}" width="${s * 1.8}" height="${s * 0.4}" fill="${color}" />
+    `;
+  }
+
+  function morningGlory(cx, cy, s, color) {
+    return `
+      <path d="M ${cx} ${cy}
+        C ${cx - s} ${cy - s * 0.3} ${cx - s * 0.6} ${cy - s * 1.3} ${cx} ${cy - s * 1.3}
+        C ${cx + s * 0.6} ${cy - s * 1.3} ${cx + s} ${cy - s * 0.3} ${cx} ${cy} Z" fill="${color}" />
+      ${dot(cx, cy - s * 0.75, s * 0.18, INK, 0.4)}
+    `;
+  }
+
+  function mountainSun(cx, cy, w, h, color) {
+    return `
+      ${dot(cx + w * 0.28, cy - h * 0.9, w * 0.16, color, 0.7)}
+      <path d="M ${cx - w / 2} ${cy} L ${cx} ${cy - h} L ${cx + w / 2} ${cy} Z" fill="${color}" />
+    `;
+  }
+
+  function lanternBig(cx, cy, w, h, color) {
+    return `
+      ${line(cx, cy - h / 2 - 16, cx, cy - h / 2, INK, 2)}
+      <ellipse cx="${cx}" cy="${cy}" rx="${w / 2}" ry="${h / 2}" fill="${color}" />
+      ${line(cx - w * 0.3, cy - h * 0.25, cx + w * 0.3, cy - h * 0.25, INK, 1.5)}
+      ${line(cx - w * 0.35, cy + h * 0.25, cx + w * 0.35, cy + h * 0.25, INK, 1.5)}
+      ${line(cx, cy + h / 2, cx, cy + h / 2 + 12, INK, 2)}
+    `;
+  }
+
+  function fullMoonIcon(cx, cy, r, color) {
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" />
+      ${dot(cx - r * 0.3, cy - r * 0.2, r * 0.15, INK, 0.15)}
+      ${dot(cx + r * 0.25, cy + r * 0.3, r * 0.1, INK, 0.15)}
+    `;
+  }
+
+  function pampasGrass(cx, cy, s, color) {
+    const blade = (dx, h, rot) => `
+      <path d="M ${cx + dx} ${cy + s} Q ${cx + dx * 1.4} ${cy} ${cx + dx * 0.6} ${cy - h}" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round" />
+      <g transform="rotate(${rot} ${cx + dx * 0.6} ${cy - h})">
+        <ellipse cx="${cx + dx * 0.6}" cy="${cy - h}" rx="${s * 0.16}" ry="${s * 0.4}" fill="${color}" />
+      </g>`;
+    return blade(-s * 0.55, s * 1.3, -20) + blade(0, s * 1.6, 0) + blade(s * 0.55, s * 1.2, 20);
+  }
+
+  function chestnutIcon(cx, cy, s, color) {
+    const spike = (dx) =>
+      line(cx + dx * s, cy + s * 0.75, cx + dx * s * 1.4, cy + s * 1.05, INK, 2);
+    return `
+      <ellipse cx="${cx}" cy="${cy + s * 0.2}" rx="${s * 0.75}" ry="${s * 0.65}" fill="${color}" />
+      <path d="M ${cx - s * 0.75} ${cy} Q ${cx} ${cy - s * 0.9} ${cx + s * 0.75} ${cy} Q ${cx} ${cy - s * 0.5} ${cx - s * 0.75} ${cy} Z" fill="${INK}" opacity="0.8" />
+      ${dot(cx, cy + s * 0.15, s * 0.1, color, 0)}
+      ${spike(-0.5)}${spike(-0.2)}${spike(0.2)}${spike(0.5)}
+    `;
+  }
+
+  function mapleLeaf(cx, cy, s, color) {
+    // 丸みのある浅い切れ込みの5裂葉（星型に見えないよう、くぼみを浅くしている）
+    const P = (x, y) => `${(cx + x * s).toFixed(1)} ${(cy + y * s).toFixed(1)}`;
+    const d = `
+      M ${P(0, -1.1)}
+      Q ${P(0.55, -0.95)} ${P(0.85, -0.5)}
+      Q ${P(0.6, -0.35)} ${P(0.55, -0.05)}
+      Q ${P(0.85, 0.2)} ${P(0.68, 0.42)}
+      Q ${P(0.35, 0.32)} ${P(0.14, 0.5)}
+      Q ${P(0.06, 0.75)} ${P(0, 0.95)}
+      Q ${P(-0.06, 0.75)} ${P(-0.14, 0.5)}
+      Q ${P(-0.35, 0.32)} ${P(-0.68, 0.42)}
+      Q ${P(-0.85, 0.2)} ${P(-0.55, -0.05)}
+      Q ${P(-0.6, -0.35)} ${P(-0.85, -0.5)}
+      Q ${P(-0.55, -0.95)} ${P(0, -1.1)}
+      Z`;
+    return `
+      <path d="${d}" fill="${color}" />
+      ${line(cx, cy + s * 0.95, cx, cy + s * 1.5, INK, 3)}
+    `;
+  }
+
+  function acornIcon(cx, cy, s, color) {
+    return `
+      <ellipse cx="${cx}" cy="${cy + s * 0.3}" rx="${s * 0.55}" ry="${s * 0.7}" fill="${color}" />
+      <path d="M ${cx - s * 0.6} ${cy - s * 0.25} Q ${cx} ${cy - s * 0.75} ${cx + s * 0.6} ${cy - s * 0.25} Q ${cx} ${cy - s * 0.02} ${cx - s * 0.6} ${cy - s * 0.25} Z" fill="${INK}" />
+      ${line(cx, cy - s * 0.75, cx, cy - s * 0.95, INK, 3)}
+    `;
+  }
+
+  function persimmonIcon(cx, cy, s, color) {
+    return `
+      <circle cx="${cx}" cy="${cy + s * 0.15}" r="${s * 0.8}" fill="${color}" />
+      <path d="M ${cx - s * 0.32} ${cy - s * 0.6} L ${cx} ${cy - s * 0.3} L ${cx + s * 0.32} ${cy - s * 0.6} L ${cx} ${cy - s * 0.78} Z" fill="${INK}" />
+      ${line(cx, cy - s * 0.78, cx, cy - s * 0.98, INK, 3)}
+    `;
+  }
+
+  function pumpkinIcon(cx, cy, s, color) {
+    return `
+      <ellipse cx="${cx - s * 0.35}" cy="${cy}" rx="${s * 0.4}" ry="${s * 0.65}" fill="${color}" opacity="0.85" />
+      <ellipse cx="${cx}" cy="${cy}" rx="${s * 0.4}" ry="${s * 0.7}" fill="${color}" />
+      <ellipse cx="${cx + s * 0.35}" cy="${cy}" rx="${s * 0.4}" ry="${s * 0.65}" fill="${color}" opacity="0.85" />
+      <path d="M ${cx - s * 0.08} ${cy - s * 0.7} Q ${cx} ${cy - s} ${cx + s * 0.15} ${cy - s * 0.85}" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round" />
+    `;
+  }
+
+  function ginkgoLeaf(cx, cy, s, color) {
+    return `
+      <path d="M ${cx} ${cy + s}
+        Q ${cx - s * 1.1} ${cy + s * 0.3} ${cx - s * 0.9} ${cy - s * 0.7}
+        Q ${cx - s * 0.4} ${cy - s * 0.4} ${cx - s * 0.05} ${cy - s * 0.55}
+        L ${cx} ${cy - s * 0.25}
+        L ${cx + s * 0.05} ${cy - s * 0.55}
+        Q ${cx + s * 0.4} ${cy - s * 0.4} ${cx + s * 0.9} ${cy - s * 0.7}
+        Q ${cx + s * 1.1} ${cy + s * 0.3} ${cx} ${cy + s} Z" fill="${color}" />
+      ${line(cx, cy + s, cx, cy + s * 1.3, INK, 3)}
+    `;
+  }
+
+  function sweetPotatoIcon(cx, cy, s, color) {
+    const steam = (dx) => `<path d="M ${cx + dx} ${cy - s * 0.7} Q ${cx + dx - 6} ${cy - s * 0.95} ${cx + dx} ${cy - s * 1.15} Q ${cx + dx + 6} ${cy - s * 1.35} ${cx + dx} ${cy - s * 1.55}" fill="none" stroke="${INK}" stroke-width="2" opacity="0.3" stroke-linecap="round" />`;
+    return `
+      ${steam(-s * 0.25)}${steam(s * 0.3)}
+      <path d="M ${cx - s * 0.9} ${cy + s * 0.3}
+        Q ${cx - s} ${cy - s * 0.5} ${cx - s * 0.3} ${cy - s * 0.6}
+        Q ${cx + s * 0.4} ${cy - s * 0.9} ${cx + s * 0.9} ${cy - s * 0.2}
+        Q ${cx + s * 1.1} ${cy + s * 0.5} ${cx + s * 0.4} ${cy + s * 0.7}
+        Q ${cx - s * 0.4} ${cy + s * 0.9} ${cx - s * 0.9} ${cy + s * 0.3} Z" fill="${color}" />
+      <path d="M ${cx - s * 0.5} ${cy - s * 0.1} q 12 6 24 -6" fill="none" stroke="${INK}" stroke-width="2" opacity="0.35" />
+      <path d="M ${cx - s * 0.2} ${cy + s * 0.35} q 14 8 30 -2" fill="none" stroke="${INK}" stroke-width="2" opacity="0.3" />
+    `;
+  }
+
+  function berryCluster(cx, cy, s, color) {
+    return `
+      ${dot(cx - s * 0.3, cy - s * 0.2, s * 0.22, color)}${dot(cx + s * 0.1, cy - s * 0.35, s * 0.22, color)}
+      ${dot(cx + s * 0.4, cy - s * 0.05, s * 0.22, color)}${dot(cx - s * 0.05, cy + s * 0.15, s * 0.22, color)}
+      ${dot(cx + s * 0.3, cy + s * 0.3, s * 0.22, color)}
+      ${line(cx - s * 0.5, cy + s * 0.5, cx - s * 0.1, cy - s * 0.1, INK, 2)}
+    `;
+  }
+
+  function snowmanIcon(cx, cy, s, color) {
+    return `
+      <circle cx="${cx}" cy="${cy + s * 0.55}" r="${s * 0.6}" fill="${color}" />
+      <circle cx="${cx}" cy="${cy - s * 0.25}" r="${s * 0.42}" fill="${color}" />
+      <path d="M ${cx - s * 0.42} ${cy - s * 0.5} L ${cx + s * 0.42} ${cy - s * 0.5} L ${cx + s * 0.3} ${cy - s * 0.78} L ${cx - s * 0.3} ${cy - s * 0.78} Z" fill="${INK}" />
+      ${dot(cx - s * 0.12, cy - s * 0.3, s * 0.05, INK)}${dot(cx + s * 0.12, cy - s * 0.3, s * 0.05, INK)}
+    `;
+  }
+
+  function christmasTreeIcon(cx, cy, s, color) {
+    return `
+      <path d="M ${cx} ${cy - s * 1.1} L ${cx + s * 0.55} ${cy - s * 0.3} L ${cx + s * 0.3} ${cy - s * 0.3}
+        L ${cx + s * 0.75} ${cy + s * 0.4} L ${cx + s * 0.4} ${cy + s * 0.4} L ${cx + s * 0.9} ${cy + s}
+        L ${cx - s * 0.9} ${cy + s} L ${cx - s * 0.4} ${cy + s * 0.4} L ${cx - s * 0.75} ${cy + s * 0.4}
+        L ${cx - s * 0.3} ${cy - s * 0.3} L ${cx - s * 0.55} ${cy - s * 0.3} Z" fill="${color}" />
+      <rect x="${cx - s * 0.12}" y="${cy + s}" width="${s * 0.24}" height="${s * 0.3}" fill="${INK}" />
+      ${dot(cx - s * 0.3, cy + s * 0.1, s * 0.08, INK)}${dot(cx + s * 0.25, cy + s * 0.25, s * 0.08, INK)}${dot(cx, cy - s * 0.15, s * 0.08, INK)}
+    `;
+  }
+
+  function templeBell(cx, cy, s, color) {
+    return `
+      <path d="M ${cx - s * 0.6} ${cy + s * 0.6} Q ${cx - s * 0.7} ${cy - s * 0.6} ${cx} ${cy - s * 0.9} Q ${cx + s * 0.7} ${cy - s * 0.6} ${cx + s * 0.6} ${cy + s * 0.6} Z" fill="${color}" />
+      <ellipse cx="${cx}" cy="${cy + s * 0.6}" rx="${s * 0.7}" ry="${s * 0.12}" fill="${INK}" opacity="0.4" />
+      ${line(cx, cy - s * 0.9, cx, cy - s * 1.15, INK, 3)}
+    `;
+  }
+
+  function hinaDoll(cx, cy, s, color) {
+    return `
+      <path d="M ${cx - s * 0.7} ${cy + s} L ${cx} ${cy - s * 0.3} L ${cx + s * 0.7} ${cy + s} Z" fill="${color}" />
+      <circle cx="${cx}" cy="${cy - s * 0.55}" r="${s * 0.32}" fill="#f4e9d8" />
+      <path d="M ${cx - s * 0.3} ${cy - s * 0.85} Q ${cx} ${cy - s * 1.15} ${cx + s * 0.3} ${cy - s * 0.85}" fill="none" stroke="${color}" stroke-width="4" />
+    `;
+  }
+
+  function heart(cx, cy, s, color) {
+    return `<path d="M ${cx} ${cy + s * 0.8}
+      C ${cx - s * 1.3} ${cy - s * 0.4}, ${cx - s * 0.5} ${cy - s * 1.3}, ${cx} ${cy - s * 0.5}
+      C ${cx + s * 0.5} ${cy - s * 1.3}, ${cx + s * 1.3} ${cy - s * 0.4}, ${cx} ${cy + s * 0.8} Z"
       fill="${color}" />`;
   }
 
-  function lantern(cx, cy, w, h, color) {
-    return `<g>
-      <line x1="${cx}" y1="${cy - h / 2 - 14}" x2="${cx}" y2="${cy - h / 2}" stroke="${color}" stroke-width="1.5" />
-      <ellipse cx="${cx}" cy="${cy}" rx="${w / 2}" ry="${h / 2}" fill="${color}" opacity="0.85" />
-      <line x1="${cx}" y1="${cy + h / 2}" x2="${cx}" y2="${cy + h / 2 + 10}" stroke="${color}" stroke-width="1.5" />
-    </g>`;
-  }
-
   function candyBag(cx, cy, w, h, color) {
-    return `<g>
+    return `
       <path d="M ${cx - w / 2} ${cy + h} L ${cx - w / 6} ${cy} L ${cx + w / 6} ${cy} L ${cx + w / 2} ${cy + h} Z" fill="${color}" />
-      <line x1="${cx - w / 6}" y1="${cy}" x2="${cx - w / 10}" y2="${cy - 22}" stroke="${color}" stroke-width="3" stroke-linecap="round" />
-      <line x1="${cx + w / 6}" y1="${cy}" x2="${cx + w / 10}" y2="${cy - 22}" stroke="${color}" stroke-width="3" stroke-linecap="round" />
-    </g>`;
+      <path d="M ${cx - w * 0.38} ${cy + h * 0.6} L ${cx - w * 0.08} ${cy + h * 0.35}
+               M ${cx - w * 0.15} ${cy + h} L ${cx + w * 0.2} ${cy + h * 0.55}
+               M ${cx + w * 0.05} ${cy + h} L ${cx + w * 0.35} ${cy + h * 0.6}"
+        stroke="#f4e9d8" stroke-width="4" opacity="0.85" />
+      ${line(cx - w / 6, cy, cx - w / 10, cy - 22, color, 3)}
+      ${line(cx + w / 6, cy, cx + w / 10, cy - 22, color, 3)}
+    `;
   }
 
-  function snow(points, color) {
-    return points.map(([x, y, r]) => dot(x, y, r, color)).join("");
+  function jackOLantern(cx, cy, s, color) {
+    return `
+      ${pumpkinIcon(cx, cy, s, color)}
+      <path d="M ${cx - s * 0.28} ${cy - s * 0.1} l ${s * 0.18} 0 M ${cx - s * 0.5} ${cy + s * 0.25} l ${-s * 0.15} 0
+        M ${cx + s * 0.28} ${cy - s * 0.1} l ${-s * 0.18} 0 M ${cx + s * 0.5} ${cy + s * 0.25} l ${s * 0.15} 0"
+        stroke="${INK}" stroke-width="5" stroke-linecap="round" fill="none" />
+    `;
   }
 
-  // ---- 月ごと・上旬/中旬/下旬ごとのシーン ----
+  // ================= 月ごとの週替わりシーン =================
 
   function buildScenes(accent) {
-    const ink = INK;
+    const cx = 60,
+      cy = 66;
     return {
       1: [
-        () => `
-          ${dot(150, 70, 34, accent)}
-          ${branch(40, 190, 70, 120, ink)}${branch(70, 120, 55, 90, ink)}${branch(70, 120, 95, 95, ink)}
-          ${branch(230, 190, 205, 115, ink)}${branch(205, 115, 185, 85, ink)}${branch(205, 115, 225, 92, ink)}
-          ${dot(55, 88, 9, ink)}${dot(95, 93, 8, ink)}${dot(185, 83, 9, ink)}${dot(225, 90, 8, ink)}
-          <path d="M 0 210 Q 75 195 150 210 T 300 210" fill="none" stroke="${accent}" stroke-width="2" />
-        `,
-        () => `
-          ${branch(40, 190, 70, 110, ink)}${branch(70, 110, 50, 80, ink)}${branch(70, 110, 100, 90, ink)}
-          ${branch(230, 190, 200, 110, ink)}${branch(200, 110, 175, 80, ink)}${branch(200, 110, 225, 90, ink)}
-          ${dot(50, 78, 9, ink)}${dot(100, 88, 8, ink)}${dot(175, 78, 9, ink)}${dot(225, 88, 8, ink)}
-          ${snow([[30,40,3],[80,20,2.5],[150,35,3],[210,15,2],[260,45,3],[100,60,2],[190,55,2.5]], accent)}
-        `,
-        () => `
-          ${mountain(150, 190, 260, 60, accent)}
-          ${branch(60, 190, 80, 130, ink)}${branch(80, 130, 65, 105, ink)}${branch(80, 130, 100, 108, ink)}
-          ${dot(65, 100, 8, ink)}${dot(100, 103, 7, ink)}
-          ${bird(150, 50, 14, ink)}${bird(190, 40, 10, ink)}${bird(120, 45, 9, ink)}
-        `,
+        () => sunrise(cx, cy + 8, 34, accent),
+        () => pineSprig(cx, cy + 10, 34, accent),
+        () => kiteIcon(cx, cy, 32, accent),
+        () => budBranch(cx, cy, 30, accent),
       ],
       2: [
-        () => `
-          ${branch(30, 200, 120, 60, ink, 4)}${branch(120, 60, 165, 42, ink, 3)}
-          ${blossomCluster(165, 42, 8, accent)}${blossomCluster(140, 90, 5, accent)}
-          ${snow([[220,50,3],[245,90,2.5],[20,60,2.5],[200,20,2]], accent)}
-        `,
-        () => `
-          ${branch(30, 200, 120, 60, ink, 4)}${branch(120, 60, 170, 40, ink, 3)}${branch(120, 60, 90, 30, ink, 3)}
-          ${blossomCluster(170, 40, 10, accent)}${blossomCluster(90, 28, 8, accent)}${blossomCluster(60, 120, 7, accent)}${blossomCluster(140, 90, 6, accent)}
-          ${dot(190, 55, 8, ink, 0.85)}${dot(196, 50, 3, accent)}
-        `,
-        () => `
-          ${dot(230, 40, 22, accent, 0.5)}
-          ${branch(30, 200, 120, 60, ink, 4)}${branch(120, 60, 170, 40, ink, 3)}
-          ${blossomCluster(170, 40, 9, accent)}${blossomCluster(60, 120, 7, accent)}${blossomCluster(110, 100, 6, accent)}
-          ${butterfly(210, 130, 8, accent)}
-        `,
+        () => snowflakeIcon(cx, cy, 34, accent),
+        () => bigBlossom(cx, cy, 20, accent, 5),
+        () => birdOnBranch(cx, cy, 26, accent),
+        () => `${bigBlossom(cx - 12, cy + 6, 14, accent, 5)}`,
       ],
       3: [
-        () => `
-          ${branch(20, 60, 240, 60, ink, 3)}${branch(60, 60, 55, 35, ink)}${branch(150, 60, 155, 35, ink)}
-          ${dot(55, 32, 4, accent)}${dot(155, 32, 4, accent)}
-          ${dot(30, 100, 3, accent)}${dot(90, 115, 3, accent)}${dot(180, 105, 3, accent)}${dot(220, 120, 3, accent)}
-        `,
-        () => `
-          ${branch(20, 60, 240, 60, ink, 3)}${branch(60, 60, 50, 20, ink)}${branch(140, 60, 150, 15, ink)}
-          ${blossomCluster(50, 20, 8, accent)}${blossomCluster(150, 15, 8, accent)}
-          ${butterfly(100, 110, 8, accent)}
-        `,
-        () => `
-          ${branch(20, 60, 240, 60, ink, 3)}${branch(60, 60, 50, 20, ink)}${branch(140, 60, 150, 15, ink)}${branch(200, 60, 210, 25, ink)}
-          ${blossomCluster(50, 20, 9, accent)}${blossomCluster(150, 15, 9, accent)}${blossomCluster(210, 25, 8, accent)}
-          ${blossomCluster(30, 90, 6, accent)}${blossomCluster(90, 110, 7, accent)}${blossomCluster(180, 100, 6, accent)}${blossomCluster(220, 120, 5, accent)}
-        `,
+        () => sproutIcon(cx, cy + 6, 30, accent),
+        () => budBranch(cx, cy, 30, accent),
+        () => bigBlossom(cx, cy, 22, accent, 5),
+        () => fallingPetalsIcon(cx, cy, 30, accent),
       ],
       4: [
-        () => `
-          ${blossomCluster(60, 40, 10, accent)}${blossomCluster(140, 25, 11, accent)}${blossomCluster(210, 55, 9, accent)}${blossomCluster(30, 100, 8, accent)}
-          ${dot(100, 140, 3, accent)}${dot(180, 160, 3, accent)}
-        `,
-        () => `
-          ${blossomCluster(60, 40, 10, accent)}${blossomCluster(140, 25, 11, accent)}${blossomCluster(210, 55, 9, accent)}${blossomCluster(30, 100, 8, accent)}
-          ${dot(100, 140, 3, accent)}${dot(180, 160, 3, accent)}${dot(230, 120, 2.5, accent)}${dot(70, 180, 2.5, accent)}${dot(150, 170, 2.5, accent)}${dot(200, 90, 2, accent)}
-        `,
-        () => `
-          ${blossomCluster(60, 40, 8, accent)}${blossomCluster(140, 25, 8, accent)}${blossomCluster(210, 55, 7, accent)}
-          ${dot(90, 60, 5, ink, 0.6)}${dot(170, 45, 5, ink, 0.6)}${dot(230, 80, 5, ink, 0.6)}
-          ${dot(100, 140, 3, accent)}${dot(180, 160, 3, accent)}
-        `,
+        () => treeBloom(cx, cy + 10, 34, accent),
+        () => fallingPetalsIcon(cx, cy, 32, accent),
+        () => dangoIcon(cx, cy, 26, accent),
+        () => leafIcon(cx, cy, 30, accent),
       ],
       5: [
-        () => `
-          ${branch(140, 190, 140, 40, ink, 4)}${branch(140, 60, 220, 50, ink)}${branch(140, 90, 210, 85, ink)}
-          <path d="M140,55 Q210,40 235,55 Q210,70 140,55 Z" fill="${accent}" />
-          <path d="M140,88 Q205,78 225,88 Q205,98 140,88 Z" fill="${accent}" opacity="0.7" />
-          ${blossomCluster(40, 140, 7, accent)}${blossomCluster(70, 170, 6, accent)}
-        `,
-        () => `
-          ${branch(140, 190, 140, 40, ink, 4)}${branch(140, 60, 220, 50, ink)}
-          <path d="M140,55 Q210,40 235,55 Q210,70 140,55 Z" fill="${accent}" />
-          ${dot(60, 130, 6, accent)}${dot(90, 160, 6, accent)}${dot(200, 150, 6, accent)}
-          ${dragonfly(220, 110, 6, ink)}
-        `,
-        () => `
-          ${branch(140, 190, 140, 40, ink, 4)}
-          <path d="M140,55 Q195,45 215,55 Q195,65 140,55 Z" fill="${accent}" opacity="0.8" />
-          ${dot(60, 130, 6, accent)}${dot(90, 160, 6, accent)}${dot(200, 150, 6, accent)}${dot(230, 120, 5, accent)}
-          ${dot(255, 45, 20, accent, 0.4)}
-        `,
+        () => koinobori(cx - 6, cy, 26, accent),
+        () => leafIcon(cx, cy, 34, accent),
+        () => ladybugIcon(cx, cy, 26, accent),
+        () => dragonflyBig(cx, cy, 26, accent),
       ],
       6: [
-        () => `
-          ${blossomCluster(140, 110, 7, accent, 6)}${blossomCluster(120, 130, 6, accent, 6)}
-          <line x1="90" y1="10" x2="80" y2="50" stroke="${ink}" stroke-width="2" opacity="0.55" />
-          <line x1="200" y1="15" x2="190" y2="55" stroke="${ink}" stroke-width="2" opacity="0.55" />
-        `,
-        () => `
-          ${blossomCluster(120, 90, 8, accent, 6)}${blossomCluster(100, 110, 7, accent, 6)}${blossomCluster(140, 115, 7, accent, 6)}${blossomCluster(120, 130, 8, accent, 6)}
-          <line x1="40" y1="20" x2="30" y2="55" stroke="${ink}" stroke-width="2" opacity="0.55" />
-          <line x1="90" y1="10" x2="80" y2="50" stroke="${ink}" stroke-width="2" opacity="0.55" />
-          <line x1="200" y1="15" x2="190" y2="55" stroke="${ink}" stroke-width="2" opacity="0.55" />
-          <line x1="240" y1="30" x2="230" y2="65" stroke="${ink}" stroke-width="2" opacity="0.55" />
-        `,
-        () => `
-          ${blossomCluster(120, 130, 8, accent, 6)}${blossomCluster(100, 150, 6, accent, 6)}
-          <path d="M20,150 A130,130 0 0 1 280,150" fill="none" stroke="${accent}" stroke-width="3" opacity="0.6" />
-          <path d="M45,150 A105,105 0 0 1 255,150" fill="none" stroke="${ink}" stroke-width="2" opacity="0.3" />
-        `,
+        () => hydrangeaBall(cx, cy, 30, accent),
+        () => umbrellaIcon(cx, cy - 6, 30, accent),
+        () => snailIcon(cx, cy, 28, accent),
+        () => rainbowArc(cx, cy + 20, 36, accent),
       ],
       7: [
-        () => `
-          ${branch(150, 190, 150, 30, ink, 4)}
-          ${branch(150, 60, 190, 45, ink, 2)}${branch(150, 90, 195, 80, ink, 2)}${branch(150, 120, 190, 115, ink, 2)}
-          ${dot(190, 45, 6, accent)}${dot(195, 80, 6, accent)}${dot(190, 115, 6, accent)}
-          ${dot(120, 55, 3, accent)}${dot(110, 85, 3, accent)}
-        `,
-        () => `
-          ${dot(150, 70, 2.5, accent)}${dot(90, 40, 2, accent)}${dot(210, 50, 2, accent)}${dot(60, 90, 1.8, accent)}${dot(240, 90, 1.8, accent)}
-          <path d="M20,30 Q150,10 280,30" fill="none" stroke="${accent}" stroke-width="1.5" opacity="0.4" />
-        `,
-        () => `
-          ${dot(150, 70, 2.5, accent)}
-          ${[0, 45, 90, 135, 180, 225, 270, 315]
-            .map(
-              (a) =>
-                `<line x1="150" y1="70" x2="${150 + Math.cos((a * Math.PI) / 180) * 38}" y2="${
-                  70 + Math.sin((a * Math.PI) / 180) * 38
-                }" stroke="${accent}" stroke-width="2" stroke-linecap="round" />`
-            )
-            .join("")}
-          ${dot(60, 150, 2, ink, 0.6)}${dot(230, 160, 2, ink, 0.6)}${dot(90, 180, 1.5, ink, 0.6)}
-        `,
+        () => tanabataBamboo(cx, cy, 30, accent),
+        () => starIcon(cx, cy, 30, accent),
+        () => fireworkBurst(cx, cy, 34, accent),
+        () => shavedIce(cx, cy + 6, 30, accent),
       ],
       8: [
-        () => `
-          ${dot(70, 55, 20, ink, 0.85)}${dot(95, 45, 26, ink, 0.85)}${dot(125, 55, 20, ink, 0.85)}${dot(50, 65, 15, ink, 0.85)}
-          ${blossomCluster(210, 140, 11, accent, 5)}${blossomCluster(230, 110, 7, accent, 5)}${branch(210, 150, 205, 190, accent, 3)}
-        `,
-        () => `
-          ${mountain(150, 190, 220, 90, accent)}
-          ${mountain(90, 190, 130, 55, ink)}
-          ${dot(230, 45, 24, accent, 0.6)}
-        `,
-        () => `
-          ${lantern(90, 110, 44, 55, accent)}
-          ${lantern(200, 100, 40, 50, accent)}
-          ${dot(150, 40, 2, ink, 0.5)}${dot(180, 30, 1.5, ink, 0.5)}
-        `,
+        () => thunderCloud(cx, cy, 32, accent),
+        () => morningGlory(cx, cy + 10, 28, accent),
+        () => mountainSun(cx, cy + 16, 76, 40, accent),
+        () => lanternBig(cx, cy, 40, 50, accent),
       ],
       9: [
-        () => `
-          ${dot(190, 55, 30, accent)}
-          <path d="M40,190 Q45,90 55,60" fill="none" stroke="${ink}" stroke-width="2" />
-          <path d="M60,190 Q68,100 80,65" fill="none" stroke="${ink}" stroke-width="2" />
-        `,
-        () => `
-          ${dot(190, 55, 26, accent)}
-          <path d="M40,190 Q45,90 55,60" fill="none" stroke="${ink}" stroke-width="2" />
-          <path d="M60,190 Q68,100 80,65" fill="none" stroke="${ink}" stroke-width="2" />
-          <path d="M85,190 Q92,110 100,75" fill="none" stroke="${ink}" stroke-width="2" />
-          ${dragonfly(150, 90, 7, accent)}
-        `,
-        () => `
-          ${dot(190, 55, 20, accent)}
-          <path d="M40,190 Q45,90 55,60" fill="none" stroke="${ink}" stroke-width="2" />
-          <path d="M60,190 Q68,100 80,65" fill="none" stroke="${ink}" stroke-width="2" />
-          ${dot(230, 150, 8, ink, 0.8)}${dot(245, 160, 6, ink, 0.8)}
-        `,
+        () => fullMoonIcon(cx, cy, 32, accent),
+        () => pampasGrass(cx, cy + 10, 30, accent),
+        () => dragonflyBig(cx, cy, 28, accent),
+        () => chestnutIcon(cx, cy, 30, accent),
       ],
       10: [
-        () => `
-          ${branch(140, 190, 140, 60, ink, 4)}${branch(140, 90, 70, 55, ink)}
-          ${blossomCluster(70, 55, 8, accent)}${blossomCluster(140, 60, 7, accent)}
-          ${dot(90, 130, 3, ink, 0.5)}
-        `,
-        () => `
-          ${branch(140, 190, 140, 60, ink, 4)}${branch(140, 90, 60, 50, ink)}${branch(140, 110, 220, 70, ink)}
-          ${blossomCluster(60, 50, 10, accent)}${blossomCluster(220, 70, 10, accent)}${blossomCluster(140, 60, 9, accent)}
-          ${dot(30, 130, 4, accent)}${dot(230, 150, 4, accent)}${dot(100, 170, 3, accent)}
-        `,
-        () => `
-          ${branch(200, 190, 200, 90, ink, 4)}
-          ${dot(200, 80, 12, accent)}${dot(180, 100, 10, accent)}${dot(220, 105, 10, accent)}
-          ${dot(60, 150, 4, accent)}${dot(90, 170, 3, accent)}${dot(40, 130, 3, accent)}${dot(120, 160, 3, accent)}
-        `,
+        () => leafIcon(cx, cy, 30, accent),
+        () => mapleLeaf(cx, cy, 32, accent),
+        () => acornIcon(cx, cy, 30, accent),
+        () => persimmonIcon(cx, cy, 32, accent),
       ],
       11: [
-        () => `
-          ${branch(140, 190, 140, 50, ink, 4)}${branch(140, 80, 90, 55, ink)}
-          ${blossomCluster(90, 55, 8, accent)}${blossomCluster(140, 50, 7, accent)}
-        `,
-        () => `
-          ${branch(140, 190, 140, 50, ink, 4)}${branch(140, 80, 80, 45, ink)}${branch(140, 100, 200, 60, ink)}
-          ${blossomCluster(80, 45, 9, accent)}${blossomCluster(200, 60, 9, accent)}${blossomCluster(140, 50, 8, accent)}
-        `,
-        () => `
-          ${branch(200, 190, 200, 100, ink, 3)}
-          ${dot(200, 90, 11, accent)}${dot(180, 110, 9, accent)}${dot(220, 115, 9, accent)}
-          ${dot(60, 160, 4, ink, 0.6)}${dot(90, 170, 3, ink, 0.6)}
-        `,
+        () => ginkgoLeaf(cx, cy, 30, accent),
+        () => `${ginkgoLeaf(cx - 20, cy + 6, 22, accent)}${ginkgoLeaf(cx + 18, cy - 4, 20, accent)}`,
+        () => sweetPotatoIcon(cx, cy, 30, accent),
+        () => berryCluster(cx, cy, 30, accent),
       ],
       12: [
-        () => `
-          ${snow([[40,40,3],[90,20,2.5],[150,45,3],[200,25,2],[240,55,3]], accent)}
-          ${branch(70, 190, 80, 130, ink, 3)}
-          ${dot(75, 125, 4, ink)}${dot(85, 132, 4, ink)}
-        `,
-        () => `
-          ${snow([[40,40,3],[90,20,2.5],[150,45,3],[200,25,2],[240,55,3],[20,90,2],[120,15,2],[260,90,2.5],[170,80,2]], accent)}
-          ${branch(70, 190, 80, 120, ink, 3)}
-          ${dot(75, 115, 4, ink)}${dot(85, 122, 4, ink)}${dot(70, 128, 4, ink)}${dot(82, 132, 4, ink)}
-        `,
-        () => `
-          ${mountain(150, 190, 260, 70, accent)}
-          ${snow([[60,40,3],[140,20,2.5],[220,45,3],[260,25,2]], accent)}
-          ${branch(70, 190, 78, 145, ink, 3)}
-          ${dot(74, 140, 4, ink)}${dot(82, 145, 4, ink)}
-        `,
+        () => snowmanIcon(cx, cy, 30, accent),
+        () => berryCluster(cx, cy, 30, accent),
+        () => christmasTreeIcon(cx, cy, 30, accent),
+        () => templeBell(cx, cy, 30, accent),
       ],
     };
   }
 
   function buildSpecial(accent) {
-    const ink = INK;
+    const cx = 60,
+      cy = 66;
     const scenes = buildScenes(accent);
-    const halloween = () => `
-      <path d="M150,50 Q110,60 105,110 Q100,150 150,155 Q200,150 195,110 Q190,60 150,50 Z" fill="${accent}" />
-      <path d="M120,80 h14 M96,110 h-10 M186,80 h-14 M204,110 h10" stroke="${ink}" stroke-width="4" fill="none" stroke-linecap="round" />
-    `;
-    const christmas = () => `
-      ${mountain(150, 180, 120, 120, ink)}
-      ${dot(150, 70, 3, accent)}${dot(120, 100, 3, accent)}${dot(180, 110, 3, accent)}
-      ${dot(150, 140, 3, accent)}${dot(100, 150, 3, accent)}${dot(200, 150, 3, accent)}
-    `;
     return {
       "1-1": scenes[1][0],
-      "2-3": () => `
-        ${dot(90, 90, 26, accent)}${dot(180, 70, 20, accent)}
-        <path d="M65,80 l-14,-10 M65,100 l-16,4 M112,80 l14,-10 M112,100 l16,4" stroke="${ink}" stroke-width="3" stroke-linecap="round" fill="none" />
-        ${dot(40, 150, 3, ink, 0.6)}${dot(230, 140, 3, ink, 0.6)}
-      `,
-      "2-14": () => `
-        ${heart(120, 100, 34, accent)}
-        ${heart(200, 130, 18, accent)}
-        ${heart(70, 140, 14, accent)}
-      `,
-      "3-3": () => `
-        <path d="M110,140 L150,60 L190,140 Z" fill="${accent}" />
-        ${dot(150, 55, 9, accent)}
-        ${blossomCluster(70, 100, 7, accent)}${blossomCluster(220, 110, 7, accent)}
-      `,
+      "2-3": () => oniMask(cx, cy, 28, accent),
+      "2-14": () => {
+        const heartColor = "#c8425a";
+        return `${heart(cx, cy, 26, heartColor)}${heart(cx + 30, cy + 16, 12, heartColor)}${heart(cx - 28, cy + 20, 10, heartColor)}`;
+      },
+      "3-3": () => hinaDoll(cx, cy, 32, accent),
       "5-5": scenes[5][0],
       "7-7": scenes[7][0],
-      "8-11": scenes[8][1],
-      "8-15": scenes[8][2],
-      "10-31": halloween,
-      "11-15": () => `
-        ${candyBag(150, 110, 90, 60, accent)}
-        ${dot(150, 60, 6, accent)}
-      `,
-      "12-24": christmas,
-      "12-25": christmas,
-      "12-31": scenes[12][2],
+      "8-11": scenes[8][2],
+      "8-15": scenes[8][3],
+      "10-31": () => jackOLantern(cx, cy, 34, accent),
+      "11-15": () => candyBag(cx, cy + 8, 60, 42, accent),
+      "12-24": scenes[12][2],
+      "12-25": scenes[12][2],
+      "12-31": scenes[12][3],
     };
   }
 
@@ -405,7 +650,10 @@
     const builder =
       special[key] || (scenes[month] && scenes[month][variantIndex(day)]) || scenes[1][0];
     const inner = builder();
-    return `<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="seasonal illustration">${inner}</svg>`;
+    return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="seasonal illustration">
+      <circle cx="60" cy="60" r="52" fill="${accent}" opacity="0.07" />
+      ${inner}
+    </svg>`;
   }
 
   /**
@@ -429,83 +677,97 @@
     </svg>`;
   }
 
+  // ================= キャプション（週替わりに対応） =================
+
   const MONTH_CAPTIONS = {
     1: [
-      { ja: "松と初日の出", en: "Pine branches and the New Year's sunrise" },
-      { ja: "雪をかぶった松", en: "Snow-capped pine branches" },
-      { ja: "松と正月の余韻", en: "Pine branches in the lingering New Year mood" },
+      { ja: "初日の出", en: "The New Year's first sunrise" },
+      { ja: "松の緑", en: "Fresh green pine sprigs" },
+      { ja: "凧あげ", en: "Flying a New Year's kite" },
+      { ja: "ふくらむ梅のつぼみ", en: "A plum bud starting to swell" },
     ],
     2: [
-      { ja: "咲き始めの梅と雪", en: "Early plum blossoms in the snow" },
-      { ja: "満開の梅とメジロ", en: "Plum blossoms in full bloom with a white-eye bird" },
-      { ja: "梅とやわらかな春の日差し", en: "Plum blossoms in soft early-spring sunlight" },
+      { ja: "雪の結晶", en: "A snowflake" },
+      { ja: "満開の梅", en: "Plum blossoms in full bloom" },
+      { ja: "梅の枝にとまる小鳥", en: "A small bird perched on a plum branch" },
+      { ja: "春を待つ蝶と梅", en: "A butterfly and plum blossoms awaiting spring" },
     ],
     3: [
       { ja: "芽吹く若草", en: "Sprouting spring grass" },
-      { ja: "ちらほら咲きの桜", en: "Cherry blossoms starting to open" },
-      { ja: "桜と若葉", en: "Cherry blossoms alongside fresh green leaves" },
+      { ja: "桜のつぼみ", en: "A cherry blossom bud" },
+      { ja: "咲いた桜の花", en: "A cherry blossom in bloom" },
+      { ja: "桜と舞う蝶", en: "Cherry blossoms and a fluttering butterfly" },
     ],
     4: [
-      { ja: "満開の桜", en: "Cherry blossoms in full bloom" },
-      { ja: "桜吹雪", en: "Cherry blossom petals swirling in the wind" },
-      { ja: "葉桜へ移りゆく頃", en: "Cherry blossoms giving way to fresh leaves" },
+      { ja: "満開の桜の木", en: "A cherry tree in full bloom" },
+      { ja: "舞い散る桜吹雪", en: "Cherry petals swirling in the wind" },
+      { ja: "お花見の団子", en: "Dango for cherry-blossom viewing" },
+      { ja: "芽吹く若葉", en: "Fresh young leaves emerging" },
     ],
     5: [
-      { ja: "若葉と鯉のぼり", en: "Fresh greenery and carp streamers" },
-      { ja: "深まる緑とトンボ", en: "Deepening greenery with a dragonfly" },
-      { ja: "初夏の気配", en: "The first hints of early summer" },
+      { ja: "泳ぐ鯉のぼり", en: "A carp streamer swimming in the wind" },
+      { ja: "深まる新緑", en: "Deepening fresh greenery" },
+      { ja: "てんとう虫", en: "A ladybug" },
+      { ja: "飛び交うトンボ", en: "A dragonfly on the wing" },
     ],
     6: [
-      { ja: "咲き始めの紫陽花", en: "Hydrangeas just beginning to bloom" },
-      { ja: "満開の紫陽花と雨", en: "Hydrangeas in full bloom in the rain" },
+      { ja: "咲きそろう紫陽花", en: "Hydrangeas blooming together" },
+      { ja: "雨の日の傘", en: "An umbrella for a rainy day" },
+      { ja: "でんでん虫", en: "A snail out in the rain" },
       { ja: "雨上がりの虹", en: "A rainbow after the rain" },
     ],
     7: [
-      { ja: "七夕の笹飾り", en: "Bamboo decorations for the Tanabata festival" },
-      { ja: "天の川と星", en: "The Milky Way and stars" },
+      { ja: "七夕の笹飾り", en: "Bamboo decorations for Tanabata" },
+      { ja: "夜空の星", en: "A star in the night sky" },
       { ja: "打ち上げ花火", en: "Fireworks lighting up the sky" },
+      { ja: "夏のかき氷", en: "Summer shaved ice" },
     ],
     8: [
-      { ja: "入道雲と朝顔", en: "Summer thunderclouds and morning glories" },
-      { ja: "夏山と青空", en: "Summer mountains under a blue sky" },
-      { ja: "お盆の灯籠", en: "Lanterns for the Obon festival" },
+      { ja: "もくもくの入道雲", en: "Billowing summer thunderclouds" },
+      { ja: "咲き誇る朝顔", en: "A morning glory in bloom" },
+      { ja: "夏山と太陽", en: "Summer mountains under the sun" },
+      { ja: "お盆の灯籠", en: "A lantern for the Obon festival" },
     ],
     9: [
-      { ja: "満月とすすき", en: "The full moon with pampas grass" },
-      { ja: "月とトンボ", en: "The moon and a dragonfly" },
-      { ja: "欠けてゆく月と実り", en: "The waning moon and autumn's harvest" },
+      { ja: "夜空に浮かぶ満月", en: "The full moon rising in the sky" },
+      { ja: "揺れるすすき", en: "Pampas grass swaying in the breeze" },
+      { ja: "秋を告げるトンボ", en: "A dragonfly announcing autumn" },
+      { ja: "実った栗", en: "A ripened chestnut" },
     ],
     10: [
-      { ja: "色づき始めの紅葉", en: "Autumn leaves just beginning to turn" },
-      { ja: "見頃の紅葉", en: "Autumn leaves at their peak" },
-      { ja: "落ち葉と柿", en: "Fallen leaves and persimmons" },
+      { ja: "色づき始めの葉", en: "A leaf just beginning to change color" },
+      { ja: "真っ赤なもみじ", en: "A maple leaf turned bright red" },
+      { ja: "落ちたどんぐり", en: "An acorn that has fallen" },
+      { ja: "実った柿", en: "A ripened persimmon" },
     ],
     11: [
-      { ja: "色づき始めの銀杏", en: "Ginkgo leaves just beginning to turn gold" },
-      { ja: "黄金色の銀杏並木", en: "A golden avenue of ginkgo trees" },
-      { ja: "晩秋の実り", en: "The harvest of late autumn" },
+      { ja: "色づく銀杏の葉", en: "A ginkgo leaf turning gold" },
+      { ja: "散り敷く銀杏の葉", en: "Ginkgo leaves scattered on the ground" },
+      { ja: "ほくほくの焼き芋", en: "A warm roasted sweet potato" },
+      { ja: "南天の赤い実", en: "The red berries of nanten" },
     ],
     12: [
-      { ja: "初雪と南天", en: "The season's first snow and nanten berries" },
-      { ja: "本格的な雪景色", en: "A landscape blanketed in snow" },
-      { ja: "年の暮れ", en: "The close of the year" },
+      { ja: "雪だるま", en: "A snowman" },
+      { ja: "南天の実と雪", en: "Nanten berries in the snow" },
+      { ja: "クリスマスツリー", en: "A Christmas tree" },
+      { ja: "除夜の鐘", en: "The temple bell rung on New Year's Eve" },
     ],
   };
 
   const SPECIAL_CAPTIONS = {
-    "1-1": { ja: "初日の出と松飾り", en: "New Year's sunrise and pine decorations" },
-    "2-3": { ja: "節分の豆まきと鬼", en: "Setsubun bean-throwing and the oni" },
+    "1-1": { ja: "初日の出", en: "The New Year's first sunrise" },
+    "2-3": { ja: "節分の鬼", en: "The oni of Setsubun" },
     "2-14": { ja: "バレンタインデーのハート", en: "Hearts for Valentine's Day" },
-    "3-3": { ja: "ひな祭りのひな人形", en: "Hinamatsuri doll display" },
-    "5-5": { ja: "こどもの日の鯉のぼり", en: "Children's Day carp streamers" },
-    "7-7": { ja: "七夕の星まつり", en: "The Tanabata star festival" },
+    "3-3": { ja: "ひな祭りのお雛様", en: "A Hina doll for Hinamatsuri" },
+    "5-5": { ja: "こどもの日の鯉のぼり", en: "A carp streamer for Children's Day" },
+    "7-7": { ja: "七夕の笹飾り", en: "Bamboo decorations for Tanabata" },
     "8-11": { ja: "山の日の夏山", en: "Summer mountains for Mountain Day" },
-    "8-15": { ja: "お盆の灯籠", en: "Lanterns for the Obon festival" },
-    "10-31": { ja: "ハロウィンのかぼちゃ", en: "A Halloween pumpkin" },
+    "8-15": { ja: "お盆の灯籠", en: "A lantern for the Obon festival" },
+    "10-31": { ja: "ハロウィンのかぼちゃ", en: "A Halloween jack-o'-lantern" },
     "11-15": { ja: "七五三の千歳飴", en: "Chitose-ame candy for Shichi-Go-San" },
-    "12-24": { ja: "クリスマスイブの雪山", en: "A snowy hill on Christmas Eve" },
-    "12-25": { ja: "クリスマスの雪山", en: "A snowy hill on Christmas Day" },
-    "12-31": { ja: "大晦日の雪景色", en: "A snowy scene on New Year's Eve" },
+    "12-24": { ja: "クリスマスツリー", en: "A Christmas tree" },
+    "12-25": { ja: "クリスマスツリー", en: "A Christmas tree" },
+    "12-31": { ja: "除夜の鐘", en: "The temple bell rung on New Year's Eve" },
   };
 
   function getCaption(month, day, lang) {
