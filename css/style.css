@@ -581,6 +581,131 @@ footer.site-footer {
 }
 footer.site-footer a { color: var(--accent); }
 
+/* ---------- 参考コンテンツ（このサイトについて・六曜・二十四節気・月の呼び名・FAQ） ---------- */
+
+.reference-wrap {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 22px;
+}
+
+.ref-block {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(43, 38, 33, 0.08);
+  padding: 20px clamp(16px, 5vw, 26px) 22px;
+  margin-bottom: 16px;
+}
+
+.ref-block h2 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  margin: 0 0 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--line);
+  color: var(--ink);
+}
+
+.ref-block p.lead {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  line-height: 1.8;
+  margin: 10px 0 16px;
+}
+
+.ref-block p.lead:last-child { margin-bottom: 0; }
+
+.ref-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ref-list li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 0.76rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.ref-list .term {
+  flex: none;
+  width: 68px;
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.ref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+}
+@media (max-width: 420px) {
+  .ref-grid { grid-template-columns: 1fr; }
+}
+
+.ref-grid .ref-item {
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  padding: 8px 0;
+  border-bottom: 1px dotted var(--line);
+}
+
+.ref-grid .ref-item .term {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.8rem;
+  margin-right: 6px;
+}
+
+.ref-grid .ref-item .deg {
+  font-size: 0.62rem;
+  color: var(--ink-soft);
+  opacity: 0.75;
+}
+
+details.faq-item {
+  margin-bottom: 10px;
+}
+details.faq-item summary {
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--ink);
+  padding: 8px 0;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+details.faq-item summary::-webkit-details-marker { display: none; }
+details.faq-item summary::after {
+  content: '+';
+  color: var(--accent);
+  font-size: 1.1rem;
+  flex: none;
+  transition: transform 0.2s ease;
+}
+details.faq-item[open] summary::after { transform: rotate(45deg); }
+details.faq-item p {
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  line-height: 1.8;
+  margin: 0 0 12px;
+}
+
 /* ---------- アクセシビリティ ---------- */
 
 :focus-visible {
