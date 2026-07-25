@@ -645,3 +645,153 @@ footer.site-footer a { color: var(--accent); }
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ---------- 言語別コンテンツの切り替え ---------- */
+/* app.js が <html lang="ja|en"> を切り替えることに連動して、
+   静的な解説記事の言語ブロックを表示/非表示する。JS実行前は
+   lang="ja" がデフォルトなので、その状態でも日本語が正しく読める。 */
+html[lang="ja"] [data-lang="en"] { display: none; }
+html[lang="en"] [data-lang="ja"] { display: none; }
+
+/* ---------- 暦の解説記事（常時表示コンテンツ） ---------- */
+
+.guide-section {
+  width: 100%;
+  max-width: 640px;
+  margin-top: 28px;
+  padding: 0 6px;
+}
+
+.guide-section h2 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line);
+}
+
+.guide-card {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.guide-card h3 {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  color: var(--ink);
+  margin: 0 0 8px;
+  letter-spacing: 0.03em;
+}
+
+.guide-card p {
+  font-size: 0.78rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+.guide-card p:last-child { margin-bottom: 0; }
+
+.guide-card ul.rokuyo-guide-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guide-card ul.rokuyo-guide-list li {
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  padding-left: 14px;
+  position: relative;
+}
+.guide-card ul.rokuyo-guide-list li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.55em;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.guide-card ul.rokuyo-guide-list strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.guide-faq-item {
+  margin-bottom: 12px;
+}
+.guide-faq-item:last-child { margin-bottom: 0; }
+.guide-faq-q {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+  display: flex;
+  gap: 6px;
+}
+.guide-faq-q::before {
+  content: "Q";
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-family: var(--font-display);
+}
+.guide-faq-a {
+  font-size: 0.76rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin: 0 0 0 24px;
+}
+
+.site-links-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.site-links-row a {
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.site-links-row a:hover { color: var(--accent); }
+
+.privacy-section {
+  width: 100%;
+  max-width: 640px;
+  margin-top: 20px;
+  padding: 0 6px 4px;
+}
+.privacy-section h2 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--ink);
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--line);
+}
+.privacy-section p {
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+
+@media (max-width: 380px) {
+  .guide-card { padding: 12px 12px; }
+}
