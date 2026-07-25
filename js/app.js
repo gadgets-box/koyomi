@@ -245,6 +245,28 @@
     }
   }
 
+  function renderLuckyDays() {
+    const d = state.date;
+    const L = window.KoyomiLunar;
+    const isJa = state.lang === "ja";
+    const badges = [];
+    if (L.isTenshabi(d.y, d.m, d.d)) {
+      badges.push(
+        `<span class="lucky-badge tensha" title="${
+          isJa ? t("tenshabiDesc") : t("tenshabiDesc")
+        }">☀ ${t("tenshabi")}</span>`
+      );
+    }
+    if (L.isIchiryuManbainichi(d.y, d.m, d.d)) {
+      badges.push(
+        `<span class="lucky-badge ichiryu" title="${t("ichiryuManbaiDesc")}">🌾 ${t(
+          "ichiryuManbai"
+        )}</span>`
+      );
+    }
+    $("#luckyDaysRow").innerHTML = badges.join("");
+  }
+
   function renderIllustration() {
     const d = state.date;
     const svg = window.KoyomiIllustration.getIllustrationSVG(d.m, d.d);
@@ -368,6 +390,7 @@
     safeRun("renderDate", renderDate);
     safeRun("renderHoliday", renderHoliday);
     safeRun("renderLunarSekkiRokuyo", renderLunarSekkiRokuyo);
+    safeRun("renderLuckyDays", renderLuckyDays);
     safeRun("renderMoonAge", renderMoonAge);
     safeRun("renderIllustration", renderIllustration);
     safeRun("renderBirthday", renderBirthday);

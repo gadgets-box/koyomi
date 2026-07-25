@@ -262,11 +262,128 @@
     return { age, phase };
   }
 
+  // ============ 日の干支（十干十二支）============
+
+  const JIKKAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+  const JUNISHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+
+  /**
+   * 指定日(JST暦日)の日干支を求める。
+   * 国立天文台 暦計算室が公表している公式に基づく:
+   *   干支番号 = (JDN + 49) mod 60 　(0:甲子, 1:乙丑, ... 59:癸亥)
+   * JDNは世界時正午を基準とするユリウス日番号のため、その暦日のUTC正午の
+   * ユリウス日をそのまま整数として用いる。
+   */
+  function getGanshi(y, m, d) {
+    const jd = A.toJulianDay(new Date(Date.UTC(y, m - 1, d, 12, 0, 0)));
+    const jdn = Math.round(jd);
+    const idx = (((jdn + 49) % 60) + 60) % 60;
+    const stem = JIKKAN[idx % 10];
+    const branch = JUNISHI[idx % 12];
+    return { index: idx, stem, branch, name: stem + branch };
+  }
+
+  // ============ 節月（節切り）テーブル ============
+  // 一粒万倍日・天赦日など「選日」は旧暦の月ではなく、二十四節気のうち
+  // 「節」（立春・啓蟄・清明…など12個）で区切られる「節月」を基準にする。
+
+  const SETSU_MONTHS = [
+    { deg: 315, ichiryu: ["丑", "午"] }, // 立春〜啓蟄前日：寅月
+    { deg: 345, ichiryu: ["寅", "酉"] }, // 啓蟄〜清明前日：卯月
+    { deg: 15, ichiryu: ["子", "卯"] }, // 清明〜立夏前日：辰月
+    { deg: 45, ichiryu: ["卯", "辰"] }, // 立夏〜芒種前日：巳月
+    { deg: 75, ichiryu: ["巳", "午"] }, // 芒種〜小暑前日：午月
+    { deg: 105, ichiryu: ["午", "酉"] }, // 小暑〜立秋前日：未月
+    { deg: 135, ichiryu: ["子", "未"] }, // 立秋〜白露前日：申月
+    { deg: 165, ichiryu: ["卯", "申"] }, // 白露〜寒露前日：酉月
+    { deg: 195, ichiryu: ["午", "酉"] }, // 寒露〜立冬前日：戌月
+    { deg: 225, ichiryu: ["酉", "戌"] }, // 立冬〜大雪前日：亥月
+    { deg: 255, ichiryu: ["子", "亥"] }, // 大雪〜小寒前日：子月
+    { deg: 285, ichiryu: ["子", "卯"] }, // 小寒〜立春前日：丑月
+  ];
+
+  /**
+   * 指定日(JST暦日)が属する「節月」（直近の節をさかのぼって求める）を返す。
+   */
+  function getSetsuMonth(y, m, d) {
+    const target = { y, m, d };
+    let best = null;
+    let minPastDiff = Infinity;
+    for (const setsu of SETSU_MONTHS) {
+      const crossDate = solarTermJSTDate(setsu.deg, y, m, d);
+      let diff = daysBetweenJSTDates(target, crossDate);
+      // 対象日より未来の場合、1年前のその節を再探索（年境界対策）
+      if (diff > 20) {
+        const crossDatePrev = solarTermJSTDate(setsu.deg, y - 1, m, d);
+        diff = daysBetweenJSTDates(target, crossDatePrev);
+      }
+      if (diff <= 0 && Math.abs(diff) < minPastDiff) {
+        minPastDiff = Math.abs(diff);
+        best = setsu;
+      }
+    }
+    return best;
+  }
+
+  // ============ 天赦日の4季（立春・立夏・立秋・立冬を境とする広い季節） ============
+  // 天赦日は一粒万倍日と異なり、12の節月ではなく、四立（立春・立夏・立秋・立冬）
+  // を境とする約3か月ずつの4季で決まる。同じ干支の組み合わせが季節を通して
+  // ずっと有効なため、一粒万倍日の節月テーブルとは別に扱う。
+  const TENSHA_SEASONS = [
+    { deg: 315, ganshi: "戊寅" }, // 立春〜立夏前日
+    { deg: 45, ganshi: "甲午" }, // 立夏〜立秋前日
+    { deg: 135, ganshi: "戊申" }, // 立秋〜立冬前日
+    { deg: 225, ganshi: "甲子" }, // 立冬〜立春前日
+  ];
+
+  function getTenshaSeason(y, m, d) {
+    const target = { y, m, d };
+    let best = null;
+    let minPastDiff = Infinity;
+    for (const season of TENSHA_SEASONS) {
+      let crossDate = solarTermJSTDate(season.deg, y, m, d);
+      let diff = daysBetweenJSTDates(target, crossDate);
+      if (diff > 40) {
+        crossDate = solarTermJSTDate(season.deg, y - 1, m, d);
+        diff = daysBetweenJSTDates(target, crossDate);
+      }
+      if (diff <= 0 && Math.abs(diff) < minPastDiff) {
+        minPastDiff = Math.abs(diff);
+        best = season;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * 一粒万倍日かどうかを判定する。
+   */
+  function isIchiryuManbainichi(y, m, d) {
+    const setsu = getSetsuMonth(y, m, d);
+    if (!setsu) return false;
+    const ganshi = getGanshi(y, m, d);
+    return setsu.ichiryu.includes(ganshi.branch);
+  }
+
+  /**
+   * 天赦日かどうかを判定する。
+   */
+  function isTenshabi(y, m, d) {
+    const season = getTenshaSeason(y, m, d);
+    if (!season) return false;
+    const ganshi = getGanshi(y, m, d);
+    return ganshi.name === season.ganshi;
+  }
+
   global.KoyomiLunar = {
     getLunarDate,
     getRokuyo,
     getSekkiInfo,
     getMoonAge,
+    getGanshi,
+    isIchiryuManbainichi,
+    isTenshabi,
+    getSetsuMonth,
     SEKKI_NAMES,
     ROKUYO_NAMES,
   };
