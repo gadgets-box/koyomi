@@ -72,7 +72,7 @@
     return m ? m[1] : "";
   }
 
-  function parseBullets(sectionText, maxItems) {
+  function parseBullets(sectionText) {
     const lines = sectionText
       .split("\n")
       .map((l) => l.trim())
@@ -90,7 +90,6 @@
       } else {
         items.push({ year: null, text: cleaned });
       }
-      if (items.length >= maxItems) break;
     }
     return items;
   }
@@ -113,12 +112,12 @@
     const eventsSection = extractSection(wikitext, "できごと");
     const birthsSection = extractSection(wikitext, "誕生日");
 
-    const events = parseBullets(eventsSection, 8).sort(
-      (a, b) => (b.year || 0) - (a.year || 0)
-    );
-    const births = parseBullets(birthsSection, 6).sort(
-      (a, b) => (b.year || 0) - (a.year || 0)
-    );
+    const events = parseBullets(eventsSection)
+      .sort((a, b) => (b.year || 0) - (a.year || 0))
+      .slice(0, 8);
+    const births = parseBullets(birthsSection)
+      .sort((a, b) => (b.year || 0) - (a.year || 0))
+      .slice(0, 6);
 
     if (events.length === 0 && births.length === 0) {
       throw new Error("no items parsed for " + title);
