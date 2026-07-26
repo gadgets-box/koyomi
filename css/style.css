@@ -691,37 +691,15 @@ html[lang="en"] [data-lang="ja"] { display: none; }
 .ref-block .lead:last-child { margin-bottom: 0; }
 .ref-block .lead a { color: var(--accent); }
 
-/* 六曜など：用語＋説明の一覧 */
-.ref-list {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ref-list li {
-  font-size: 0.78rem;
-  line-height: 1.65;
-  color: var(--ink-soft);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-}
-.ref-list .term {
-  flex-shrink: 0;
-  font-weight: 700;
-  color: var(--ink);
-  font-family: var(--font-display);
-  letter-spacing: 0.02em;
-}
-
-/* 二十四節気・月の呼び名など：カード状のグリッド一覧 */
+/* 二十四節気・月の呼び名・六曜など：カード状のグリッド一覧 */
 .ref-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: 10px;
+}
+.ref-grid.ref-grid-1col {
+  grid-template-columns: 1fr;
 }
 .ref-item {
   font-size: 0.72rem;
