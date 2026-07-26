@@ -654,144 +654,139 @@ html[lang="ja"] [data-lang="en"] { display: none; }
 html[lang="en"] [data-lang="ja"] { display: none; }
 
 /* ---------- 暦の解説記事（常時表示コンテンツ） ---------- */
+/* ひめくりカレンダー本体（.calendar-stack）と同じ幅・紙の質感で統一する */
 
-.guide-section {
+.reference-wrap {
   width: 100%;
-  max-width: 640px;
-  margin-top: 28px;
-  padding: 0 6px;
+  max-width: 420px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.guide-section h2 {
+.ref-block {
+  background: var(--paper);
+  border-radius: 2px;
+  padding: 18px clamp(16px, 5vw, 24px);
+  box-shadow: 0 8px 18px rgba(43, 38, 33, 0.14), 0 2px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+.ref-block h2 {
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  letter-spacing: 0.06em;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
   color: var(--ink);
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   padding-bottom: 8px;
-  border-bottom: 2px solid var(--line);
+  border-bottom: 1px dashed var(--line);
 }
 
-.guide-card {
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
-}
-
-.guide-card h3 {
-  font-family: var(--font-display);
-  font-size: 0.88rem;
-  color: var(--ink);
-  margin: 0 0 8px;
-  letter-spacing: 0.03em;
-}
-
-.guide-card p {
+.ref-block .lead {
   font-size: 0.78rem;
   line-height: 1.75;
   color: var(--ink-soft);
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
-.guide-card p:last-child { margin-bottom: 0; }
+.ref-block .lead:last-child { margin-bottom: 0; }
+.ref-block .lead a { color: var(--accent); }
 
-.guide-card ul.rokuyo-guide-list {
+/* 六曜など：用語＋説明の一覧 */
+.ref-list {
   list-style: none;
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
-.guide-card ul.rokuyo-guide-list li {
-  font-size: 0.76rem;
-  line-height: 1.6;
+.ref-list li {
+  font-size: 0.78rem;
+  line-height: 1.65;
   color: var(--ink-soft);
-  padding-left: 14px;
-  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
 }
-.guide-card ul.rokuyo-guide-list li::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0.55em;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-.guide-card ul.rokuyo-guide-list strong {
-  color: var(--ink);
+.ref-list .term {
+  flex-shrink: 0;
   font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
 }
 
-.guide-faq-item {
-  margin-bottom: 12px;
+/* 二十四節気・月の呼び名など：カード状のグリッド一覧 */
+.ref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
 }
-.guide-faq-item:last-child { margin-bottom: 0; }
-.guide-faq-q {
+.ref-item {
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.ref-item .term {
+  display: block;
+  font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--ink);
-  margin: 0 0 4px;
-  display: flex;
-  gap: 6px;
+  margin-bottom: 2px;
 }
-.guide-faq-q::before {
-  content: "Q";
+
+/* FAQ：ネイティブの details/summary で「＋」タップ開閉を実現 */
+.faq-item {
+  border-bottom: 1px dashed var(--line);
+  padding: 10px 0;
+}
+.faq-item:first-of-type { padding-top: 0; }
+.faq-item:last-of-type { border-bottom: none; padding-bottom: 0; }
+
+.faq-item summary {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::before {
+  content: "+";
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px; height: 18px;
+  width: 20px; height: 20px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-size: 0.65rem;
-  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.2s ease;
 }
-.guide-faq-a {
+.faq-item[open] summary::before {
+  content: "−";
+}
+.faq-item p {
   font-size: 0.76rem;
   line-height: 1.7;
   color: var(--ink-soft);
-  margin: 0 0 0 24px;
-}
-
-.site-links-row {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-.site-links-row a {
-  font-size: 0.68rem;
-  color: var(--ink-soft);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.site-links-row a:hover { color: var(--accent); }
-
-.privacy-section {
-  width: 100%;
-  max-width: 640px;
-  margin-top: 20px;
-  padding: 0 6px 4px;
-}
-.privacy-section h2 {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  color: var(--ink);
-  margin: 0 0 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px dashed var(--line);
-}
-.privacy-section p {
-  font-size: 0.72rem;
-  line-height: 1.7;
-  color: var(--ink-soft);
-  margin: 0 0 8px;
+  margin: 8px 0 0 28px;
 }
 
 @media (max-width: 380px) {
-  .guide-card { padding: 12px 12px; }
+  .ref-block { padding: 14px 14px; }
+  .ref-grid { grid-template-columns: 1fr; }
 }
