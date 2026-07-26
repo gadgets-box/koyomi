@@ -45,18 +45,18 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "旧暦と新暦（グレゴリオ暦）は何が違うのですか？",
+      "name": "旧暦・二十四節気の日付はどのくらい正確ですか？",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "新暦（グレゴリオ暦）は太陽の動きだけを基準にした暦で、現在世界中で使われています。旧暦は月の満ち欠けを基準にしながら閏月で季節とのずれを調整する太陰太陽暦で、日本では明治5年（1872年）まで公式に使われていました。旧暦は現在でもお盆や十五夜など、伝統行事の日取りを決める際に使われています。"
+        "text": "太陽黄経と新月の瞬間を天文計算式（Jean Meeusの低精度公式）で求めて算出しています。太陽黄経の誤差は角度0.01度未満、新月時刻の誤差は数分〜十数分程度で、通常の利用には十分な精度です。ただし国立天文台の公式暦とは、まれに1日程度ずれる場合があります（特に閏月をまたぐ年の月境界付近）。"
       }
     },
     {
       "@type": "Question",
-      "name": "大安と仏滅、どちらが良い日ですか？",
+      "name": "六曜はどうやって決まっているのですか？",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "六曜の中では大安が最も吉、仏滅が最も凶とされています。結婚式や契約事などの慶事は大安を選ぶ人が多く、仏滅の日は新しいことを始めるのを避ける傾向があります。ただし六曜は迷信的な暦注であり、科学的な根拠はありません。"
+        "text": "六曜は旧暦の月と日を足した数を6で割った余りによって機械的に決まる、伝統的な計算式にもとづいています。個人の運勢を占うものではなく、冠婚葬祭など行事の日取りを選ぶ際の慣習的な目安として使われてきたものです。"
       }
     },
     {
@@ -64,23 +64,31 @@
       "name": "一粒万倍日と天赦日が重なるとどうなりますか？",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "両方が重なる日は「最強開運日」と呼ばれ、特に縁起の良い日とされています。開業・結婚・新しい財布の使い始めなど、物事を始めるのに良いとされる日として、暦や吉日カレンダーでよく紹介されます。"
+        "text": "両方が重なる日は「最強開運日」と呼ばれ、特に縁起の良い日とされています。開業・結婚・新しい財布の使い始めなど、物事を始めるのに良いとされる日として、暦や吉日カレンダーでよく紹介されます。日の干支・一粒万倍日・天赦日の判定は国立天文台 暦計算室の公式な計算式を採用し、複数の暦専門サイトが公表しているデータと照合して検証しています。"
       }
     },
     {
       "@type": "Question",
-      "name": "このサイトの暦の情報はどれくらい正確ですか？",
+      "name": "「今日は何の日」の情報はどこから取得していますか？",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "旧暦・二十四節気・月齢は天文計算に基づく近似値で算出しており、国立天文台が発表する公式の暦とまれに1日程度ずれる可能性があります。日の干支・一粒万倍日・天赦日の判定は国立天文台 暦計算室の公式な計算式を採用し、複数の暦専門サイトが公表しているデータと照合して検証しています。"
+        "text": "ウィキペディア日本語版・英語版の該当日ページから、できごとや誕生日の情報を取得して表示しています。ページの更新状況によって内容が変動することがあります。"
       }
     },
     {
       "@type": "Question",
-      "name": "生まれてから何日目という機能は、入力した誕生日を外部に送信しますか？",
+      "name": "「生まれてから何日目」の情報は外部に送信されますか？",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "いいえ。入力した生年月日はこの端末のブラウザ内（localStorage）にのみ保存され、サーバーや外部には一切送信されません。"
+        "text": "いいえ。入力した生年月日はお使いの端末のブラウザ内（localStorage）にのみ保存され、サーバーや外部には一切送信されません。他の人と共有されることもありません。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "祝日の色分けが表示されない日があります",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "祝日情報は外部APIから取得しており、対応期間は去年・今年・来年分に限られます。それ以外の年に移動した場合、祝日の赤色表示は適用されませんが、日曜日の赤色表示・土曜日の青色表示は全期間で有効です。"
       }
     }
   ]
@@ -193,166 +201,252 @@
 
 <p class="keyboard-hint" id="keyboardHint">← → キーで日付を移動できます</p>
 
-<section class="guide-section" id="koyomiGuide" aria-label="暦の基礎知識">
-  <h2 data-lang="ja">暦の基礎知識</h2>
-  <h2 data-lang="en">Understanding the Japanese Calendar</h2>
-
-  <article class="guide-card">
+<div class="reference-wrap">
+  <section class="ref-block" id="about">
     <div data-lang="ja">
-      <h3>旧暦（太陰太陽暦）とは</h3>
-      <p>旧暦とは、月の満ち欠けを基準にしながら太陽の動きも取り入れた「太陰太陽暦」のことで、明治5年（1872年）まで日本で公式に使われていた暦です。新月の日をその月の1日（朔日）とし、月の満ち欠けの周期（約29.5日）に合わせて29日の「小の月」と30日の「大の月」を組み合わせます。ただし、これだけでは1年が約354日となり、太陽の動きを基準にした季節の移り変わりと年々ずれが生じてしまいます。そこで約3年に一度、1年を13か月とする「閏月」を挿入し、季節とのずれを調整してきました。当サイトの旧暦・閏月の判定は、この伝統的な考え方を天文計算で再現した近似値です。</p>
+      <h2>「今日の暦」について</h2>
+      <p class="lead">「今日の暦」は、日本の伝統的な暦の要素を1枚の日めくりカレンダーにまとめて表示するサイトです。太陽の動きから割り出す「二十四節気」、月の満ち欠けから割り出す「旧暦」、その旧暦をもとに巡る「六曜」、そして月の呼び名や「今日は何の日」といった話題まで、今日という1日にまつわる情報をまとめてご覧いただけます。</p>
+      <p class="lead">旧暦・二十四節気・月齢は、太陽の黄経と新月の瞬間を天文計算で求め、そこから算出しています。国立天文台が発表する公式の暦要項とは、計算モデルの精度差によりまれに1日程度ずれる場合がありますが、日々の暮らしの中で「今日はどんな日か」を知る目安として気軽にご活用ください。</p>
     </div>
     <div data-lang="en">
-      <h3>What is the lunar-solar calendar (旧暦)?</h3>
-      <p>The traditional Japanese calendar, known as 旧暦 (kyūreki), is a lunisolar calendar that was Japan's official calendar until 1872. Each month begins on the day of the new moon, and months alternate between 29 and 30 days to track the roughly 29.5-day lunar cycle. Since twelve such months add up to only about 354 days, a "leap month" is inserted roughly every three years to keep the calendar aligned with the solar year and its seasons. The lunar dates shown on this site are calculated using the same traditional astronomical logic.</p>
+      <h2>About "Today's Almanac"</h2>
+      <p class="lead">Today's Almanac brings together the elements of the traditional Japanese calendar on a single daily tear-off page: the 24 solar terms derived from the sun's movement, the lunar calendar derived from the moon's phases, the Rokuyō cycle that follows from it, and topics like traditional moon names and historical events for each day.</p>
+      <p class="lead">The lunar date, solar terms, and moon age are calculated from astronomical computations of the sun's ecliptic longitude and the moment of each new moon. Because of differences in calculation precision, these may occasionally differ by about a day from the official almanac published by Japan's National Astronomical Observatory — but they're a handy everyday guide to what kind of day today is.</p>
     </div>
-  </article>
+  </section>
 
-  <article class="guide-card">
+  <section class="ref-block" id="rokuyo-guide">
     <div data-lang="ja">
-      <h3>六曜とは</h3>
-      <p>六曜（ろくよう）は、先勝・友引・先負・仏滅・大安・赤口の6種類が6日周期で巡ってくる、日の吉凶を占う暦注の一つです。中国で生まれ、鎌倉時代から室町時代にかけて日本に伝わったとされています。現在でも冠婚葬祭の日取りを選ぶ際の目安として親しまれています。</p>
-      <ul class="rokuyo-guide-list">
-        <li><strong>先勝（せんしょう）</strong>：「先んずれば即ち勝つ」の意味で、午前中は吉、午後は凶とされる日。</li>
-        <li><strong>友引（ともびき）</strong>：もともとは勝負がつかない「共引き」の意味だが、「友を引く」と結びつけられ、慶事には良いが葬儀は避けられる傾向がある日。</li>
-        <li><strong>先負（せんぶ／せんまけ）</strong>：「先んずれば即ち負ける」の意味で、午前は凶、午後は吉とされる日。</li>
-        <li><strong>仏滅（ぶつめつ）</strong>：六曜の中で最も凶とされ、何事も控えめにするのが良いとされる日。</li>
-        <li><strong>大安（たいあん）</strong>：六曜の中で最も吉とされ、結婚式や契約事などに好まれる日。</li>
-        <li><strong>赤口（しゃっこう）</strong>：正午の前後を除いて凶とされる日。</li>
+      <h2>六曜（ろくよう）について</h2>
+      <p class="lead">六曜は、旧暦の月と日の組み合わせから機械的に決まる、6種類の暦注（吉凶の目安）です。冠婚葬祭の日取りを選ぶ際の参考として、今も広く使われています。</p>
+      <ul class="ref-list">
+        <li><span class="term">先勝</span><span>「先んずれば即ち勝つ」の意。午前中は吉、午後は凶とされ、急ぎごとに向く日。</span></li>
+        <li><span class="term">友引</span><span>「凶事に友を引く」とされ、慶事によいが弔事は避けられる日。朝夕は吉、正午は凶。</span></li>
+        <li><span class="term">先負</span><span>「先んずれば即ち負ける」の意。午前は凶、午後は吉とされ、静かに過ごすのがよい日。</span></li>
+        <li><span class="term">仏滅</span><span>六曜の中で最も凶とされる日。何事にも凶とされ、特に祝い事は避けられる傾向がある。</span></li>
+        <li><span class="term">大安</span><span>「大いに安し」の意。一日を通して吉とされ、結婚式や契約事に好まれる、最も良いとされる日。</span></li>
+        <li><span class="term">赤口</span><span>陰陽道に由来し、正午のみ吉、それ以外は凶とされる日。刃物や火の扱いに注意すべきとされる。</span></li>
       </ul>
     </div>
     <div data-lang="en">
-      <h3>What is Rokuyō?</h3>
-      <p>Rokuyō is a 6-day cycle of fortune-telling labels — Sakigachi, Tomobiki, Sakimake, Butsumetsu, Taian, and Shakkō — that originated in China and spread to Japan between the Kamakura and Muromachi periods. It's still commonly used today as a rough guide when choosing dates for weddings, funerals, and other ceremonies.</p>
-      <ul class="rokuyo-guide-list">
-        <li><strong>Sakigachi</strong>: favorable in the morning, unfavorable in the afternoon.</li>
-        <li><strong>Tomobiki</strong>: good for celebrations, but weddings avoid funerals on this day due to its association with "drawing a friend along."</li>
-        <li><strong>Sakimake</strong>: unfavorable in the morning, favorable in the afternoon.</li>
-        <li><strong>Butsumetsu</strong>: considered the least fortunate day; best to avoid starting new things.</li>
-        <li><strong>Taian</strong>: considered the most fortunate day; popular for weddings and contracts.</li>
-        <li><strong>Shakkō</strong>: unfavorable except around midday.</li>
+      <h2>About Rokuyō</h2>
+      <p class="lead">Rokuyō is a set of six traditional labels mechanically determined from the lunar month and day, used as a rough guide of daily fortune. It's still widely used today when choosing dates for weddings, funerals, and other ceremonies.</p>
+      <ul class="ref-list">
+        <li><span class="term">Sakigachi</span><span>"Act first and win." Favorable in the morning, unfavorable in the afternoon — good for urgent matters.</span></li>
+        <li><span class="term">Tomobiki</span><span>Said to "draw a friend into misfortune," so funerals are avoided; good for celebrations. Favorable morning and evening, unfavorable at midday.</span></li>
+        <li><span class="term">Sakimake</span><span>"Act first and lose." Unfavorable in the morning, favorable in the afternoon — best spent quietly.</span></li>
+        <li><span class="term">Butsumetsu</span><span>Considered the least fortunate of the six days; celebrations in particular tend to be avoided.</span></li>
+        <li><span class="term">Taian</span><span>"Great peace." Favorable all day long; the most popular day for weddings and contracts.</span></li>
+        <li><span class="term">Shakkō</span><span>Rooted in Onmyōdō tradition; favorable only around midday, otherwise a day to be careful with blades and fire.</span></li>
       </ul>
     </div>
-  </article>
+  </section>
 
-  <article class="guide-card">
+  <section class="ref-block" id="sekki-guide">
     <div data-lang="ja">
-      <h3>二十四節気とは</h3>
-      <p>二十四節気は、太陽の動き（黄経）を24等分し、季節の移り変わりを表した暦です。中国の戦国時代に考案され、奈良時代ごろに日本へ伝わったとされています。立春・夏至・立秋・冬至など、季節を表す言葉として現在も天気予報やニュースなどで広く使われています。二十四節気はさらに、月の始まりを示す「節」（立春・啓蟄・清明など12個）と、季節の中間点を示す「中気」（雨水・春分・穀雨など12個）に分けられ、一粒万倍日や天赦日などの吉日も、この「節」を基準に決められています。</p>
-    </div>
-    <div data-lang="en">
-      <h3>What are the 24 solar terms (二十四節気)?</h3>
-      <p>The 24 solar terms divide the sun's yearly path into 24 equal segments, marking the changing of the seasons. The system originated in China and reached Japan around the Nara period. Terms like Risshun (start of spring), Geshi (summer solstice), Risshū (start of autumn), and Tōji (winter solstice) are still widely used in Japanese weather reports and everyday speech. The 24 terms are further split into 12 "setsu," which mark the start of a solar month, and 12 "chūki," which mark its midpoint — and traditional lucky days such as Ichiryu-manbainichi and Tenshabi are calculated using these setsu boundaries.</p>
-    </div>
-  </article>
-
-  <article class="guide-card">
-    <div data-lang="ja">
-      <h3>月齢と月の呼び名</h3>
-      <p>月齢とは新月からの経過日数のことで、0が新月、約14.8で満月を迎えます。日本では古くから、日ごとに姿を変える月に「十六夜（いざよい）」「立待月」「居待月」「有明の月」など、情緒あふれる呼び名がつけられてきました。これらの呼び名は、月の出が毎日少しずつ遅くなっていく様子を、人が月の出を待つ姿になぞらえたものです。当サイトでは、その日の月齢に最も近い伝統的な呼び名を表示しています。</p>
-    </div>
-    <div data-lang="en">
-      <h3>Moon age and traditional lunar names</h3>
-      <p>Moon age refers to the number of days elapsed since the new moon, with 0 marking the new moon and about 14.8 marking the full moon. Japan has long given each night's moon a poetic name — Izayoi ("the hesitant moon"), Tachimachizuki ("the standing-wait moon"), Imachizuki ("the sitting-wait moon"), Ariake-no-tsuki ("the dawn moon") — names that reflect how moonrise creeps a little later each night, as if people were waiting for it to appear. This site shows whichever traditional name is closest to that day's actual moon age.</p>
-    </div>
-  </article>
-
-  <article class="guide-card">
-    <div data-lang="ja">
-      <h3>一粒万倍日・天赦日とは</h3>
-      <p>一粒万倍日（いちりゅうまんばいび）は、「一粒の籾（もみ）が万倍にも実る稲穂になる」という意味の吉日で、何かを新しく始めるのに良いとされます。二十四節気の「節」で区切られる「節月」ごとに割り当てられた2つの日の干支（十二支）によって決まり、年間およそ60日ほど巡ってきます。天赦日（てんしゃにち）は、暦の中で最上の吉日とされ、「天がすべての罪を赦す日」を意味します。立春・立夏・立秋・立冬を境とする4つの季節それぞれに割り当てられた特定の日干支（十干十二支）と一致する日だけが天赦日となり、年に5〜6回ほどしか巡ってきません。両方が重なる日は「最強開運日」とも呼ばれます。</p>
-    </div>
-    <div data-lang="en">
-      <h3>What are Ichiryu-manbainichi and Tenshabi?</h3>
-      <p>Ichiryu-manbainichi ("a single grain, ten-thousandfold") is a lucky day said to be good for starting something new, based on the idea that a single rice seed can grow into a stalk bearing ten-thousand times its number in grain. It's determined by matching the day's zodiac branch against two branches assigned to each of the 12 solar-term "setsu" months, and occurs roughly 60 days a year. Tenshabi, meaning "the day heaven forgives all sins," is considered the single most auspicious day in the traditional calendar. It only falls on days whose full stem-and-branch combination matches one specific value assigned to each of four seasons (bounded by Risshun, Rikka, Risshū, and Rittō), occurring only 5–6 times a year. When both coincide, the day is called a "supreme lucky day."</p>
-    </div>
-  </article>
-
-  <article class="guide-card">
-    <div data-lang="ja">
-      <h3>日本の祝日について</h3>
-      <p>当サイトの祝日情報は、内閣府が公表している祝日データをもとにした公開API（holidays-jp）から取得しています。日曜日と祝日が重なった場合などに設けられる「振替休日」も含まれます。祝日は法律改正によって年ごとに変わることがあるため、最新の情報は内閣府等の公式発表もあわせてご確認ください。</p>
-    </div>
-    <div data-lang="en">
-      <h3>About Japanese public holidays</h3>
-      <p>Holiday information on this site is drawn from a public API (holidays-jp) based on data published by Japan's Cabinet Office, including "furikae kyūjitsu" substitute holidays observed when a holiday falls on a Sunday. Because holidays can change from year to year through legislation, please also check official government announcements for the most current information.</p>
-    </div>
-  </article>
-
-  <h2 data-lang="ja" style="margin-top:24px;">よくある質問</h2>
-  <h2 data-lang="en" style="margin-top:24px;">Frequently Asked Questions</h2>
-
-  <article class="guide-card" id="faqBlock">
-    <div data-lang="ja">
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">旧暦と新暦（グレゴリオ暦）は何が違うのですか？</p>
-        <p class="guide-faq-a">新暦（グレゴリオ暦）は太陽の動きだけを基準にした暦で、現在世界中で使われています。旧暦は月の満ち欠けを基準にしながら閏月で季節とのずれを調整する太陰太陽暦で、日本では明治5年（1872年）まで公式に使われていました。旧暦は現在でもお盆や十五夜など、伝統行事の日取りを決める際に使われています。</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">大安と仏滅、どちらが良い日ですか？</p>
-        <p class="guide-faq-a">六曜の中では大安が最も吉、仏滅が最も凶とされています。結婚式や契約事などの慶事は大安を選ぶ人が多く、仏滅の日は新しいことを始めるのを避ける傾向があります。ただし六曜は迷信的な暦注であり、科学的な根拠はありません。</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">一粒万倍日と天赦日が重なるとどうなりますか？</p>
-        <p class="guide-faq-a">両方が重なる日は「最強開運日」と呼ばれ、特に縁起の良い日とされています。開業・結婚・新しい財布の使い始めなど、物事を始めるのに良いとされる日として、暦や吉日カレンダーでよく紹介されます。</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">このサイトの暦の情報はどれくらい正確ですか？</p>
-        <p class="guide-faq-a">旧暦・二十四節気・月齢は天文計算に基づく近似値で算出しており、国立天文台が発表する公式の暦とまれに1日程度ずれる可能性があります。日の干支・一粒万倍日・天赦日の判定は国立天文台 暦計算室の公式な計算式を採用し、複数の暦専門サイトが公表しているデータと照合して検証しています。</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">生まれてから何日目という機能は、入力した誕生日を外部に送信しますか？</p>
-        <p class="guide-faq-a">いいえ。入力した生年月日はこの端末のブラウザ内（localStorage）にのみ保存され、サーバーや外部には一切送信されません。</p>
+      <h2>二十四節気 一覧</h2>
+      <p class="lead">二十四節気は、1年を太陽の動き（黄経）にもとづいて24等分し、季節の移り変わりを表した暦法です。中国から伝わり、日本の気候に合わせて今も季節の節目として親しまれています。</p>
+      <div class="ref-grid">
+        <div class="ref-item"><span class="term">立春</span>春の気配が感じられ始める頃</div>
+        <div class="ref-item"><span class="term">雨水</span>雪が雨に変わり、氷が解け始める頃</div>
+        <div class="ref-item"><span class="term">啓蟄</span>冬眠していた虫たちが動き出す頃</div>
+        <div class="ref-item"><span class="term">春分</span>昼と夜の長さがほぼ等しくなる日</div>
+        <div class="ref-item"><span class="term">清明</span>万物が清らかで生き生きと見える頃</div>
+        <div class="ref-item"><span class="term">穀雨</span>穀物を潤す春の雨が降る頃</div>
+        <div class="ref-item"><span class="term">立夏</span>夏の気配が感じられ始める頃</div>
+        <div class="ref-item"><span class="term">小満</span>草木が茂り、命が満ち始める頃</div>
+        <div class="ref-item"><span class="term">芒種</span>稲や麦の穂が実り始める頃</div>
+        <div class="ref-item"><span class="term">夏至</span>一年で昼が最も長くなる日</div>
+        <div class="ref-item"><span class="term">小暑</span>本格的な暑さが始まる頃</div>
+        <div class="ref-item"><span class="term">大暑</span>一年で最も暑さが厳しくなる頃</div>
+        <div class="ref-item"><span class="term">立秋</span>秋の気配が感じられ始める頃</div>
+        <div class="ref-item"><span class="term">処暑</span>暑さが和らぎ始める頃</div>
+        <div class="ref-item"><span class="term">白露</span>朝夕の草花に露が結び始める頃</div>
+        <div class="ref-item"><span class="term">秋分</span>昼と夜の長さがほぼ等しくなる日</div>
+        <div class="ref-item"><span class="term">寒露</span>露が冷たく感じられ始める頃</div>
+        <div class="ref-item"><span class="term">霜降</span>霜が降り始める頃</div>
+        <div class="ref-item"><span class="term">立冬</span>冬の気配が感じられ始める頃</div>
+        <div class="ref-item"><span class="term">小雪</span>わずかに雪が降り始める頃</div>
+        <div class="ref-item"><span class="term">大雪</span>雪が本格的に降り積もる頃</div>
+        <div class="ref-item"><span class="term">冬至</span>一年で夜が最も長くなる日</div>
+        <div class="ref-item"><span class="term">小寒</span>寒さが本格化し始める頃</div>
+        <div class="ref-item"><span class="term">大寒</span>一年で最も寒さが厳しくなる頃</div>
       </div>
     </div>
     <div data-lang="en">
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">What's the difference between the lunar calendar and the modern Gregorian calendar?</p>
-        <p class="guide-faq-a">The Gregorian calendar tracks only the sun's movement and is used worldwide today. The lunar-solar calendar (kyūreki) tracks the moon's phases while inserting leap months to stay aligned with the seasons; it was Japan's official calendar until 1872, and is still used to set the dates of traditional events like Obon and the mid-autumn moon-viewing festival.</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">Which is better, Taian or Butsumetsu?</p>
-        <p class="guide-faq-a">Among the six Rokuyō days, Taian is considered the most fortunate and Butsumetsu the least. Many people choose Taian for weddings and contracts, and avoid starting new things on Butsumetsu — though Rokuyō is a folk tradition with no scientific basis.</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">What happens when Ichiryu-manbainichi and Tenshabi fall on the same day?</p>
-        <p class="guide-faq-a">A day when both coincide is called a "supreme lucky day," considered especially auspicious for starting a business, getting married, or beginning to use a new wallet.</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">How accurate is the calendar information on this site?</p>
-        <p class="guide-faq-a">The lunar date, solar terms, and moon age are approximations from astronomical calculations, and may occasionally differ by a day from Japan's official National Astronomical Observatory almanac. The day's stem-branch, Ichiryu-manbainichi, and Tenshabi are calculated using the Observatory's official formula and cross-checked against published data from several calendar reference sites.</p>
-      </div>
-      <div class="guide-faq-item">
-        <p class="guide-faq-q">Does the "days since birth" feature send my birthdate anywhere?</p>
-        <p class="guide-faq-a">No. The date you enter is stored only in this browser's local storage and is never sent to a server or any third party.</p>
+      <h2>The 24 Solar Terms</h2>
+      <p class="lead">The 24 solar terms divide the year into 24 equal segments based on the sun's ecliptic longitude, marking the changing of the seasons. The system came from China and is still used in Japan today to mark seasonal turning points.</p>
+      <div class="ref-grid">
+        <div class="ref-item"><span class="term">Risshun</span>The first signs of spring appear</div>
+        <div class="ref-item"><span class="term">Usui</span>Snow turns to rain and ice begins to melt</div>
+        <div class="ref-item"><span class="term">Keichitsu</span>Hibernating insects awaken and stir</div>
+        <div class="ref-item"><span class="term">Shunbun</span>Day and night are nearly equal in length</div>
+        <div class="ref-item"><span class="term">Seimei</span>All things appear fresh and vivid</div>
+        <div class="ref-item"><span class="term">Kokuu</span>Spring rains that nourish the grain crops</div>
+        <div class="ref-item"><span class="term">Rikka</span>The first signs of summer appear</div>
+        <div class="ref-item"><span class="term">Shōman</span>Plants grow lush as life fills the land</div>
+        <div class="ref-item"><span class="term">Bōshu</span>Grain crops begin to form ears</div>
+        <div class="ref-item"><span class="term">Geshi</span>The longest day of the year</div>
+        <div class="ref-item"><span class="term">Shōsho</span>The heat of summer begins in earnest</div>
+        <div class="ref-item"><span class="term">Taisho</span>The hottest stretch of the year</div>
+        <div class="ref-item"><span class="term">Risshū</span>The first signs of autumn appear</div>
+        <div class="ref-item"><span class="term">Shosho</span>The summer heat begins to ease</div>
+        <div class="ref-item"><span class="term">Hakuro</span>Dew begins to form on plants at dawn</div>
+        <div class="ref-item"><span class="term">Shūbun</span>Day and night are nearly equal in length</div>
+        <div class="ref-item"><span class="term">Kanro</span>The morning dew begins to feel cold</div>
+        <div class="ref-item"><span class="term">Sōkō</span>Frost begins to form</div>
+        <div class="ref-item"><span class="term">Rittō</span>The first signs of winter appear</div>
+        <div class="ref-item"><span class="term">Shōsetsu</span>Light snow begins to fall</div>
+        <div class="ref-item"><span class="term">Taisetsu</span>Snow begins to fall heavily and settle</div>
+        <div class="ref-item"><span class="term">Tōji</span>The longest night of the year</div>
+        <div class="ref-item"><span class="term">Shōkan</span>The cold begins to set in seriously</div>
+        <div class="ref-item"><span class="term">Daikan</span>The coldest stretch of the year</div>
       </div>
     </div>
-  </article>
-</section>
+  </section>
 
-<section class="privacy-section" id="aboutPrivacy">
-  <h2 data-lang="ja">このサイトについて</h2>
-  <h2 data-lang="en">About this site</h2>
-  <div data-lang="ja">
-    <p>「今日の暦」は、旧暦・六曜・二十四節気・月齢・今日は何の日などを毎日確認できる、個人運営の日めくりカレンダーサイトです。誕生日の入力値はこの端末のブラウザ内にのみ保存され、外部に送信されることはありません。</p>
-    <p>当サイトは第三者配信の広告サービス（Google AdSenseなど）を利用する場合があります。広告配信事業者は、ユーザーの興味に応じた広告を表示するためにCookie等を使用することがあります。広告におけるCookieの使用の詳細、または無効にする方法については、<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Googleのポリシーと規約ページ</a>をご覧ください。</p>
-  </div>
-  <div data-lang="en">
-    <p>Today's Almanac (今日の暦) is an independently run daily calendar site showing the lunar date, Rokuyō, solar terms, moon phase, and historical events for each day. Any birthdate you enter is stored only in this browser's local storage and is never sent elsewhere.</p>
-    <p>This site may use third-party advertising services such as Google AdSense. Advertising vendors may use cookies to serve ads based on a user's interests. For details on how these cookies are used in advertising, or to opt out, please see <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google's Ads Policies page</a>.</p>
-  </div>
-  <div class="site-links-row">
-    <a href="#koyomiGuide" data-lang="ja">暦の基礎知識</a>
-    <a href="#koyomiGuide" data-lang="en">Calendar guide</a>
-    <a href="#faqBlock" data-lang="ja">よくある質問</a>
-    <a href="#faqBlock" data-lang="en">FAQ</a>
-  </div>
-</section>
+  <section class="ref-block" id="moon-guide">
+    <div data-lang="ja">
+      <h2>月の呼び名（月齢の異名）</h2>
+      <p class="lead">日本には、新月からの日数に応じて移りゆく月の姿に、風流な名前をつける文化があります。代表的な呼び名をご紹介します。</p>
+      <div class="ref-grid">
+        <div class="ref-item"><span class="term">新月</span>月が全く見えない状態。ここから新しい月の巡りが始まる。</div>
+        <div class="ref-item"><span class="term">三日月</span>新月から3日目頃に見える、細く弧を描いた月。</div>
+        <div class="ref-item"><span class="term">上弦の月</span>弓の弦を上にして見えることから名付けられた半月。</div>
+        <div class="ref-item"><span class="term">十三夜月</span>満月の少し手前、十五夜に次いで美しいとされる月。</div>
+        <div class="ref-item"><span class="term">小望月</span>満月の前日の月。「待宵の月」とも呼ばれる。</div>
+        <div class="ref-item"><span class="term">満月（十五夜）</span>最も丸く輝く、旧暦15日前後の月。</div>
+        <div class="ref-item"><span class="term">十六夜</span>満月の翌晩、少しためらうように遅れて昇る月。</div>
+        <div class="ref-item"><span class="term">立待月</span>立って待つ間に昇ってくる月。</div>
+        <div class="ref-item"><span class="term">居待月</span>座って待つほど昇るのが遅い月。</div>
+        <div class="ref-item"><span class="term">寝待月</span>寝転んで待つほど昇るのが遅い月。臥待月とも。</div>
+        <div class="ref-item"><span class="term">更待月</span>夜更けにようやく昇ってくる月。</div>
+        <div class="ref-item"><span class="term">下弦の月</span>満月から欠けていき、再び半月になった状態。</div>
+        <div class="ref-item"><span class="term">有明の月</span>夜明けの空にまだ残っている、細くなった月。</div>
+        <div class="ref-item"><span class="term">三十日月</span>新月直前の、ほとんど見えなくなった月。</div>
+      </div>
+    </div>
+    <div data-lang="en">
+      <h2>Traditional Names for the Moon's Phases</h2>
+      <p class="lead">Japan has long given poetic names to the moon as its shape changes with the days since the new moon. Here are the best-known ones.</p>
+      <div class="ref-grid">
+        <div class="ref-item"><span class="term">New Moon</span>The moon is entirely invisible; the new lunar cycle begins here.</div>
+        <div class="ref-item"><span class="term">Crescent Moon</span>A thin, curved sliver visible around the third day after the new moon.</div>
+        <div class="ref-item"><span class="term">First Quarter Moon</span>A half-moon named for resembling an upward-facing bowstring.</div>
+        <div class="ref-item"><span class="term">Thirteen-Night Moon</span>Just short of full, considered second in beauty only to the harvest moon.</div>
+        <div class="ref-item"><span class="term">Almost-Full Moon</span>The night before the full moon, also called "the waiting-night moon."</div>
+        <div class="ref-item"><span class="term">Full Moon</span>The roundest and brightest moon, around the 15th day of the lunar month.</div>
+        <div class="ref-item"><span class="term">Izayoi</span>The night after the full moon, rising as if hesitating a little later.</div>
+        <div class="ref-item"><span class="term">Standing-Wait Moon</span>Rises while one is still standing, waiting for it.</div>
+        <div class="ref-item"><span class="term">Sitting-Wait Moon</span>Rises late enough that one waits for it seated.</div>
+        <div class="ref-item"><span class="term">Reclining-Wait Moon</span>Rises so late one waits for it lying down.</div>
+        <div class="ref-item"><span class="term">Late-Night-Wait Moon</span>Doesn't rise until deep into the night.</div>
+        <div class="ref-item"><span class="term">Last Quarter Moon</span>Waning from full back into a half-moon shape.</div>
+        <div class="ref-item"><span class="term">Dawn Moon</span>A thin, waning moon still visible in the dawn sky.</div>
+        <div class="ref-item"><span class="term">Moon of the Last Day</span>Just before the new moon, nearly invisible.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ref-block" id="lucky-days-guide">
+    <div data-lang="ja">
+      <h2>一粒万倍日・天赦日について</h2>
+      <p class="lead">一粒万倍日（いちりゅうまんばいび）は、「一粒の籾が万倍にも実る稲穂になる」という意味の吉日で、何かを新しく始めるのに良いとされます。二十四節気の「節」で区切られる「節月」ごとに割り当てられた2つの日の干支（十二支）によって決まり、年間およそ60日ほど巡ってきます。</p>
+      <p class="lead">天赦日（てんしゃにち）は、暦の中で最上の吉日とされ、「天がすべての罪を赦す日」を意味します。立春・立夏・立秋・立冬を境とする4つの季節それぞれに割り当てられた特定の日干支と一致する日だけが天赦日となり、年に5〜6回ほどしか巡ってきません。両方が重なる日は「最強開運日」とも呼ばれます。</p>
+    </div>
+    <div data-lang="en">
+      <h2>About Ichiryu-manbainichi and Tenshabi</h2>
+      <p class="lead">Ichiryu-manbainichi ("a single grain, ten-thousandfold") is a lucky day said to be good for starting something new. It's determined by matching the day's zodiac branch against two branches assigned to each of the 12 solar-term "setsu" months, occurring roughly 60 days a year.</p>
+      <p class="lead">Tenshabi, meaning "the day heaven forgives all sins," is considered the single most auspicious day in the traditional calendar. It only falls on days matching one specific stem-and-branch combination assigned to each of four seasons bounded by Risshun, Rikka, Risshū, and Rittō, occurring only 5–6 times a year. A day when both coincide is called a "supreme lucky day."</p>
+    </div>
+  </section>
+
+  <section class="ref-block" id="holiday-guide">
+    <div data-lang="ja">
+      <h2>日本の祝日について</h2>
+      <p class="lead">当サイトの祝日情報は、内閣府が公表している祝日データをもとにした公開API（holidays-jp）から取得しています。日曜日と祝日が重なった場合などに設けられる「振替休日」も含まれます。祝日は法律改正によって年ごとに変わることがあるため、最新の情報は内閣府等の公式発表もあわせてご確認ください。</p>
+    </div>
+    <div data-lang="en">
+      <h2>About Japanese Public Holidays</h2>
+      <p class="lead">Holiday information on this site is drawn from a public API (holidays-jp) based on data published by Japan's Cabinet Office, including "furikae kyūjitsu" substitute holidays observed when a holiday falls on a Sunday. Because holidays can change year to year through legislation, please also check official government announcements for the most current information.</p>
+    </div>
+  </section>
+
+  <section class="ref-block" id="about-privacy">
+    <div data-lang="ja">
+      <h2>このサイトについて</h2>
+      <p class="lead">「今日の暦」は、旧暦・六曜・二十四節気・月齢・今日は何の日などを毎日確認できる、個人運営の日めくりカレンダーサイトです。誕生日の入力値はこの端末のブラウザ内にのみ保存され、外部に送信されることはありません。</p>
+      <p class="lead">当サイトは第三者配信の広告サービス（Google AdSenseなど）を利用する場合があります。広告配信事業者は、ユーザーの興味に応じた広告を表示するためにCookie等を使用することがあります。広告におけるCookieの使用の詳細、または無効にする方法については、<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Googleのポリシーと規約ページ</a>をご覧ください。</p>
+    </div>
+    <div data-lang="en">
+      <h2>About This Site</h2>
+      <p class="lead">Today's Almanac is an independently run daily calendar site showing the lunar date, Rokuyō, solar terms, moon phase, and historical events for each day. Any birthdate you enter is stored only in this browser's local storage and is never sent elsewhere.</p>
+      <p class="lead">This site may use third-party advertising services such as Google AdSense. Advertising vendors may use cookies to serve ads based on a user's interests. For details on how these cookies are used in advertising, or to opt out, please see <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google's Ads Policies page</a>.</p>
+    </div>
+  </section>
+
+  <section class="ref-block" id="faq">
+    <div data-lang="ja">
+      <h2>よくある質問</h2>
+      <details class="faq-item">
+        <summary>旧暦・二十四節気の日付はどのくらい正確ですか？</summary>
+        <p>太陽黄経と新月の瞬間を天文計算式（Jean Meeusの低精度公式）で求めて算出しています。太陽黄経の誤差は角度0.01度未満、新月時刻の誤差は数分〜十数分程度で、通常の利用には十分な精度です。ただし国立天文台の公式暦とは、まれに1日程度ずれる場合があります（特に閏月をまたぐ年の月境界付近）。</p>
+      </details>
+      <details class="faq-item">
+        <summary>六曜はどうやって決まっているのですか？</summary>
+        <p>六曜は旧暦の月と日を足した数を6で割った余りによって機械的に決まる、伝統的な計算式にもとづいています。個人の運勢を占うものではなく、冠婚葬祭など行事の日取りを選ぶ際の慣習的な目安として使われてきたものです。</p>
+      </details>
+      <details class="faq-item">
+        <summary>一粒万倍日と天赦日が重なるとどうなりますか？</summary>
+        <p>両方が重なる日は「最強開運日」と呼ばれ、特に縁起の良い日とされています。開業・結婚・新しい財布の使い始めなど、物事を始めるのに良いとされる日として、暦や吉日カレンダーでよく紹介されます。日の干支・一粒万倍日・天赦日の判定は国立天文台 暦計算室の公式な計算式を採用し、複数の暦専門サイトが公表しているデータと照合して検証しています。</p>
+      </details>
+      <details class="faq-item">
+        <summary>「今日は何の日」の情報はどこから取得していますか？</summary>
+        <p>ウィキペディア日本語版・英語版の該当日ページから、できごとや誕生日の情報を取得して表示しています。ページの更新状況によって内容が変動することがあります。</p>
+      </details>
+      <details class="faq-item">
+        <summary>「生まれてから何日目」の情報は外部に送信されますか？</summary>
+        <p>入力した生年月日はお使いの端末のブラウザ内（localStorage）にのみ保存され、サーバーや外部には一切送信されません。他の人と共有されることもありません。</p>
+      </details>
+      <details class="faq-item">
+        <summary>祝日の色分けが表示されない日があります</summary>
+        <p>祝日情報は外部APIから取得しており、対応期間は去年・今年・来年分に限られます。それ以外の年に移動した場合、祝日の赤色表示は適用されませんが、日曜日の赤色表示・土曜日の青色表示は全期間で有効です。</p>
+      </details>
+    </div>
+    <div data-lang="en">
+      <h2>Frequently Asked Questions</h2>
+      <details class="faq-item">
+        <summary>How accurate are the lunar date and solar term dates?</summary>
+        <p>They're calculated using astronomical formulas (Jean Meeus's low-precision equations) for the sun's ecliptic longitude and the moment of each new moon — accurate to under 0.01° for solar longitude and within minutes for new moon timing, which is plenty for everyday use. They may occasionally differ by about a day from Japan's official National Astronomical Observatory almanac, especially near month boundaries in years with a leap month.</p>
+      </details>
+      <details class="faq-item">
+        <summary>How is Rokuyō determined?</summary>
+        <p>Rokuyō follows mechanically from the remainder when the lunar month and day are added together and divided by 6. It isn't a personal fortune-telling system — it's a customary guide used when choosing dates for weddings, funerals, and other ceremonies.</p>
+      </details>
+      <details class="faq-item">
+        <summary>What happens when Ichiryu-manbainichi and Tenshabi coincide?</summary>
+        <p>A day when both coincide is called a "supreme lucky day," considered especially auspicious for starting a business, getting married, or beginning to use a new wallet. The day's stem-branch, Ichiryu-manbainichi, and Tenshabi are calculated using the National Astronomical Observatory's official formula and cross-checked against data published by several calendar reference sites.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Where does the "on this day" information come from?</summary>
+        <p>It's pulled from the Japanese and English Wikipedia pages for each date, showing historical events and births. Content may change as those pages are updated.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Does the "days since birth" feature send my birthdate anywhere?</summary>
+        <p>No. The date you enter is stored only in this browser's local storage and is never sent to a server or any third party, nor shared with anyone else.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Why isn't the holiday color showing on some dates?</summary>
+        <p>Holiday information comes from an external API covering only last year, this year, and next year. Outside that range, the red holiday color won't apply — though the red Sunday and blue Saturday coloring remain in effect for any date.</p>
+      </details>
+    </div>
+  </section>
+</div>
 
 <footer class="site-footer">
   <a href="#top" id="backToTop">トップへ戻る</a><br>
   今日の暦 — 旧暦・二十四節気は天文計算による近似値、今日は何の日はWikipediaのデータを利用しています。<br>
-  <a href="#koyomiGuide">暦の基礎知識・FAQ</a> ・ <a href="#aboutPrivacy">このサイトについて</a>
+  <a href="#about">暦について</a> ・ <a href="#faq">よくある質問</a>
 </footer>
 
 <script src="js/astro.js"></script>
