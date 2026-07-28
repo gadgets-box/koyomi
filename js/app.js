@@ -362,27 +362,23 @@
   }
 
   function renderStructuredData() {
-    const d = state.date;
-    const existing = document.getElementById("structuredData");
-    if (existing) existing.remove();
-    const metaDesc = document.querySelector('meta[name="description"]');
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.id = "structuredData";
-    script.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      name: document.title,
-      description: metaDesc ? metaDesc.getAttribute("content") : "",
-      about: {
-        "@type": "Event",
-        name: `${fmtISO(d)} 今日の暦`,
-        startDate: fmtISO(d),
-      },
-      inLanguage: state.lang,
-    });
-    document.head.appendChild(script);
-  }
+  const d = state.date;
+  const existing = document.getElementById("structuredData");
+  if (existing) existing.remove();
+  const metaDesc = document.querySelector('meta[name="description"]');
+  const script = document.createElement("script");
+  script.type = "application/ld+json";
+  script.id = "structuredData";
+  script.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: document.title,
+    description: metaDesc ? metaDesc.getAttribute("content") : "",
+    datePublished: fmtISO(d),
+    inLanguage: state.lang,
+  });
+  document.head.appendChild(script);
+}
 
   function renderAll() {
     safeRun("applyLangAttrs", applyLangAttrs);
