@@ -14,6 +14,27 @@
     historyTab: "events",
   };
 
+  // ============ 記念日データ（祝日とは別に、固定の月日で管理） ============
+  // 以前は別ファイル js/anniversaries.js に分けていたが、ファイルの
+  // アップロード漏れ・パスの大文字小文字違いによって読み込まれない事例が
+  // あったため、他の機能と同じく確実に読み込まれる app.js に統合した。
+  const ANNIVERSARIES = {
+    "1-17": { type: "memorial", ja: "阪神・淡路大震災", en: "Great Hanshin-Awaji Earthquake" },
+    "3-11": { type: "memorial", ja: "東日本大震災", en: "Great East Japan Earthquake" },
+    "3-14": { type: "general", ja: "ホワイトデー", en: "White Day" },
+    "4-1": { type: "general", ja: "エイプリルフール", en: "April Fools' Day" },
+    "6-23": { type: "memorial", ja: "沖縄慰霊の日", en: "Okinawa Memorial Day" },
+    "8-6": { type: "memorial", ja: "広島原爆の日", en: "Hiroshima Atomic Bombing Memorial Day" },
+    "8-9": { type: "memorial", ja: "長崎原爆の日", en: "Nagasaki Atomic Bombing Memorial Day" },
+    "8-15": { type: "memorial", ja: "終戦記念日", en: "End of World War II Memorial Day" },
+    "9-1": { type: "memorial", ja: "防災の日（関東大震災）", en: "Disaster Prevention Day (Great Kantō Earthquake)" },
+    "11-22": { type: "general", ja: "いい夫婦の日", en: "Good Couple's Day" },
+  };
+
+  function getAnniversary(month, day) {
+    return ANNIVERSARIES[`${month}-${day}`] || null;
+  }
+
   function todayJST() {
     const now = new Date();
     const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
@@ -170,8 +191,7 @@
     const el = $("#anniversaryName");
     el.textContent = "";
     el.className = "anniversary-name";
-    if (!window.KoyomiAnniversaries) return;
-    const anniv = window.KoyomiAnniversaries.getAnniversary(d.m, d.d);
+    const anniv = getAnniversary(d.m, d.d);
     if (!anniv) return;
     const isJa = state.lang === "ja";
     el.textContent = isJa ? anniv.ja : anniv.en;
