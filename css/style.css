@@ -290,6 +290,24 @@ body.season-autumn { --accent: var(--season-autumn); }
   letter-spacing: 0.04em;
 }
 
+.anniversary-name {
+  margin-top: 3px;
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  min-height: 0;
+}
+.anniversary-name:empty { margin-top: 0; }
+.anniversary-name.anniversary-memorial {
+  color: #5c5850;
+  font-weight: 600;
+}
+.anniversary-name.anniversary-memorial::before {
+  content: "🕯 ";
+}
+.anniversary-name.anniversary-general {
+  color: var(--ink-soft);
+}
+
 .weekday-badge.is-sunday-or-holiday { background: var(--holiday-red, #c0392b) !important; }
 .weekday-badge.is-saturday { background: var(--saturday-blue, #2b5ea3) !important; }
 .date-number.is-sunday-or-holiday { color: var(--holiday-red, #c0392b); }
