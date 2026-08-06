@@ -165,6 +165,21 @@
     $("#holidayName").textContent = "";
   }
 
+  function renderAnniversary() {
+    const d = state.date;
+    const el = $("#anniversaryName");
+    el.textContent = "";
+    el.className = "anniversary-name";
+    if (!window.KoyomiAnniversaries) return;
+    const anniv = window.KoyomiAnniversaries.getAnniversary(d.m, d.d);
+    if (!anniv) return;
+    const isJa = state.lang === "ja";
+    el.textContent = isJa ? anniv.ja : anniv.en;
+    el.classList.add(
+      anniv.type === "memorial" ? "anniversary-memorial" : "anniversary-general"
+    );
+  }
+
   function applyDayColorClass(kind) {
     const badge = $("#weekdayBadge");
     const num = $("#dateNumber");
@@ -362,29 +377,34 @@
   }
 
   function renderStructuredData() {
-  const d = state.date;
-  const existing = document.getElementById("structuredData");
-  if (existing) existing.remove();
-  const metaDesc = document.querySelector('meta[name="description"]');
-  const script = document.createElement("script");
-  script.type = "application/ld+json";
-  script.id = "structuredData";
-  script.textContent = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: document.title,
-    description: metaDesc ? metaDesc.getAttribute("content") : "",
-    datePublished: fmtISO(d),
-    inLanguage: state.lang,
-  });
-  document.head.appendChild(script);
-}
+    const d = state.date;
+    const existing = document.getElementById("structuredData");
+    if (existing) existing.remove();
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "structuredData";
+    script.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: document.title,
+      description: metaDesc ? metaDesc.getAttribute("content") : "",
+      about: {
+        "@type": "Event",
+        name: `${fmtISO(d)} 今日の暦`,
+        startDate: fmtISO(d),
+      },
+      inLanguage: state.lang,
+    });
+    document.head.appendChild(script);
+  }
 
   function renderAll() {
     safeRun("applyLangAttrs", applyLangAttrs);
     safeRun("renderHeader", renderHeader);
     safeRun("renderDate", renderDate);
     safeRun("renderHoliday", renderHoliday);
+    safeRun("renderAnniversary", renderAnniversary);
     safeRun("renderLunarSekkiRokuyo", renderLunarSekkiRokuyo);
     safeRun("renderLuckyDays", renderLuckyDays);
     safeRun("renderMoonAge", renderMoonAge);
