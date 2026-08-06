@@ -7,7 +7,7 @@
 <meta name="description" content="今日の旧暦・六曜・二十四節気・月齢・一粒万倍日・天赦日・日本の祝日・今日は何の日・生まれてから何日目かがひと目でわかる日めくりカレンダー。旧暦や六曜の意味を解説する読み物付き。日本語/英語対応。">
 <meta name="keywords" content="日めくりカレンダー,今日の暦,旧暦,六曜,二十四節気,今日は何の日,生まれてから何日目,大安,仏滅,一粒万倍日,天赦日,月齢,十六夜,日本の祝日">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://gadgets-box.github.io/koyomi/">
+<link rel="canonical" href="https://example.com/">
 
 <!-- Open Graph / SNS -->
 <meta property="og:type" content="website">
@@ -34,7 +34,7 @@
   "@type": "WebSite",
   "name": "今日の暦",
   "alternateName": "Today's Almanac",
-  "url": "https://gadgets-box.github.io/koyomi/",
+  "url": "https://example.com/",
   "inLanguage": ["ja", "en"]
 }
 </script>
@@ -129,6 +129,7 @@
       <div class="month-year" id="monthYear">2026年1月</div>
       <span class="weekday-badge" id="weekdayBadge">木曜日</span>
       <div class="holiday-name" id="holidayName"></div>
+      <div class="anniversary-name" id="anniversaryName"></div>
       <div class="lucky-days-row" id="luckyDaysRow"></div>
     </div>
 
@@ -363,12 +364,14 @@
 
   <section class="ref-block" id="holiday-guide">
     <div data-lang="ja">
-      <h2>日本の祝日について</h2>
+      <h2>日本の祝日・記念日について</h2>
       <p class="lead">当サイトの祝日情報は、内閣府が公表している祝日データをもとにした公開API（holidays-jp）から取得しています。日曜日と祝日が重なった場合などに設けられる「振替休日」も含まれます。祝日は法律改正によって年ごとに変わることがあるため、最新の情報は内閣府等の公式発表もあわせてご確認ください。</p>
+      <p class="lead">また、法定の祝日ではないものの、日本のカレンダーで広く取り上げられる「記念日」も表示しています。広島原爆の日（8月6日）・長崎原爆の日（8月9日）・終戦記念日（8月15日）・東日本大震災（3月11日）・阪神・淡路大震災（1月17日）など、鎮魂や追悼の意味を持つ日は控えめな表示にしています。</p>
     </div>
     <div data-lang="en">
-      <h2>About Japanese Public Holidays</h2>
+      <h2>About Japanese Public Holidays and Memorial Days</h2>
       <p class="lead">Holiday information on this site is drawn from a public API (holidays-jp) based on data published by Japan's Cabinet Office, including "furikae kyūjitsu" substitute holidays observed when a holiday falls on a Sunday. Because holidays can change year to year through legislation, please also check official government announcements for the most current information.</p>
+      <p class="lead">The site also shows commemorative dates that aren't official public holidays but are widely observed on Japanese calendars — including the Hiroshima (Aug 6) and Nagasaki (Aug 9) atomic bombing memorial days, the end of World War II (Aug 15), the Great East Japan Earthquake (Mar 11), and the Great Hanshin-Awaji Earthquake (Jan 17). These solemn memorial dates are shown in a deliberately understated style.</p>
     </div>
   </section>
 
@@ -456,6 +459,7 @@
 <script src="js/illustrations.js"></script>
 <script src="js/historyEvents.js"></script>
 <script src="js/holidays.js"></script>
+<script src="js/anniversaries.js"></script>
 <script src="js/app.js"></script>
 <noscript>
   <p style="text-align:center; padding: 20px;">
